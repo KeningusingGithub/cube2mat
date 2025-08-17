@@ -1,18 +1,21 @@
-# cube2mat/features/vwap_cross_count.py
+# features/vwap_twap_diff.py
 from __future__ import annotations
 import datetime as dt
 import numpy as np
 import pandas as pd
 from feature_base import BaseFeature, FeatureContext
 
-class VWAPCrossCountFeature(BaseFeature):
+
+class VWAPTWAPDiffFeature(BaseFeature):
     """
-    Count sign changes of (close - vwap) within 09:30–15:59, ignoring zeros.
-    Crossing counted when consecutive non-zero signs differ. NaN if <2 non-zero points.
+    Session VWAP minus TWAP within 09:30–15:59:
+      - TWAP = mean(close)
+      - VWAP = sum(close*volume)/sum(volume)
+      value = VWAP - TWAP; NaN if sum(volume)<=0 or <3 ticks.
     """
-    name = "vwap_cross_count"
-    description = "Count of sign flips of (close - vwap) during RTH; ignore zeros."
-    required_full_columns = ("symbol", "time", "close", "vwap")
+    name = "vwap_twap_diff"
+    description = "VWAP - TWAP (mean(close)) within 09:30–15:59; NaN if insufficient."
+    required_full_columns = ("symbol", "time", "close", "volume")
     required_pv_columns = ("symbol",)
 
     def process_date(self, ctx: FeatureContext, date: dt.date):
@@ -25,22 +28,24 @@ class VWAPCrossCountFeature(BaseFeature):
         df = self.ensure_et_index(df_full, "time", ctx.tz).between_time("09:30","15:59")
         if df.empty: out["value"] = pd.NA; return out
 
-        for col in ("close","vwap"):
+        df = df[df["symbol"].isin(set(sample["symbol"].unique()))].copy()
+        for col in ("close","volume"):
             df[col] = pd.to_numeric(df[col], errors="coerce")
-        df = df.dropna(subset=["close","vwap"])
-        df = df[df["symbol"].isin(set(sample["symbol"].unique()))]
+        df = df.dropna(subset=["close","volume"])
         if df.empty: out["value"] = pd.NA; return out
 
         res = {}
         for sym, g in df.groupby("symbol", sort=False):
-            d = (g.sort_index()["close"] - g["vwap"]).to_numpy()
-            s = np.sign(d)
-            s = s[s != 0]
-            if s.size < 2:
+            g = g.sort_index()
+            if len(g) < 3: res[sym] = np.nan; continue
+            twap = float(g["close"].mean())
+            vsum = float(g["volume"].sum())
+            if not np.isfinite(vsum) or vsum <= 0:
                 res[sym] = np.nan; continue
-            flips = np.sum(s[1:] != s[:-1])
-            res[sym] = float(flips)
+            vwap = float((g["close"] * g["volume"]).sum() / vsum)
+            res[sym] = vwap - twap
         out["value"] = out["symbol"].map(res)
         return out
 
-feature = VWAPCrossCountFeature()
+
+feature = VWAPTWAPDiffFeature()

@@ -1,17 +1,18 @@
-# cube2mat/features/vwap_cross_count.py
+# features/mean_abs_vwap_gap.py
 from __future__ import annotations
 import datetime as dt
 import numpy as np
 import pandas as pd
 from feature_base import BaseFeature, FeatureContext
 
-class VWAPCrossCountFeature(BaseFeature):
+
+class MeanAbsVWAPGapFeature(BaseFeature):
     """
-    Count sign changes of (close - vwap) within 09:30–15:59, ignoring zeros.
-    Crossing counted when consecutive non-zero signs differ. NaN if <2 non-zero points.
+    Mean absolute gap between close and vwap within 09:30–15:59.
+    NaN if <1 valid gap.
     """
-    name = "vwap_cross_count"
-    description = "Count of sign flips of (close - vwap) during RTH; ignore zeros."
+    name = "mean_abs_vwap_gap"
+    description = "Mean of |close - vwap| during RTH; NaN if no valid bars."
     required_full_columns = ("symbol", "time", "close", "vwap")
     required_pv_columns = ("symbol",)
 
@@ -31,16 +32,11 @@ class VWAPCrossCountFeature(BaseFeature):
         df = df[df["symbol"].isin(set(sample["symbol"].unique()))]
         if df.empty: out["value"] = pd.NA; return out
 
-        res = {}
-        for sym, g in df.groupby("symbol", sort=False):
-            d = (g.sort_index()["close"] - g["vwap"]).to_numpy()
-            s = np.sign(d)
-            s = s[s != 0]
-            if s.size < 2:
-                res[sym] = np.nan; continue
-            flips = np.sum(s[1:] != s[:-1])
-            res[sym] = float(flips)
+        gap = (df["close"] - df["vwap"]).abs()
+        res = df.assign(gap=gap).groupby("symbol")["gap"].agg(lambda s: float(s.mean()) if s.notna().sum()>=1 else np.nan)
+
         out["value"] = out["symbol"].map(res)
         return out
 
-feature = VWAPCrossCountFeature()
+
+feature = MeanAbsVWAPGapFeature()

@@ -1,34 +1,23 @@
-# cube2mat/features/n_gini.py
+# features/n_entropy_concentration.py
 from __future__ import annotations
 import datetime as dt
 import numpy as np
 import pandas as pd
 from feature_base import BaseFeature, FeatureContext
 
-class NGiniFeature(BaseFeature):
+
+class NEntropyConcentrationFeature(BaseFeature):
     """
-    Gini index for distribution of n across intraday bars (09:30–15:59).
-    Use standard discrete Gini on nonnegative values; NaN if sum<=0 or <2 bars.
+    Concentration of trade counts via 1 - normalized Shannon entropy.
+    Steps:
+      - p_i = n_i / sum(n_i), keep p_i>0
+      - H = -sum p_i*log(p_i); Hmax=log(m) where m=len(p_i)
+      - value = 1 - H/Hmax in [0,1]; NaN if sum(n)<=0 or m<2
     """
-    name = "n_gini"
-    description = "Gini index of trade count distribution across RTH bars."
+    name = "n_entropy_concentration"
+    description = "1 - normalized entropy of n distribution across RTH bars (09:30–15:59)."
     required_full_columns = ("symbol", "time", "n")
     required_pv_columns = ("symbol",)
-
-    @staticmethod
-    def _gini(x: np.ndarray) -> float:
-        x = x.astype(float)
-        x = x[np.isfinite(x) & (x >= 0)]
-        n = x.size
-        s = x.sum()
-        if n < 2 or s <= 0:
-            return np.nan
-        xs = np.sort(x)
-        cum = np.cumsum(xs)
-        # Gini = 1 - 2 * sum((n - i + 0.5) * x_i) / (n * sum(x))
-        i = np.arange(1, n + 1)
-        g = 1.0 - 2.0 * np.sum((n - i + 0.5) * xs) / (n * s)
-        return float(np.clip(g, 0.0, 1.0))
 
     def process_date(self, ctx: FeatureContext, date: dt.date):
         df_full = self.load_full(ctx, date, list(self.required_full_columns))
@@ -47,8 +36,22 @@ class NGiniFeature(BaseFeature):
 
         res = {}
         for sym, g in df.groupby("symbol", sort=False):
-            res[sym] = self._gini(g.sort_index()["n"].to_numpy())
+            x = g.sort_index()["n"].astype(float).values
+            total = float(np.nansum(x))
+            if not np.isfinite(total) or total <= 0:
+                res[sym] = np.nan; continue
+            p = x / total
+            p = p[p > 0]
+            m = p.size
+            if m < 2:
+                res[sym] = np.nan; continue
+            H = float(-(p * np.log(p)).sum())
+            Hmax = float(np.log(m))
+            val = 1.0 - (H / Hmax) if Hmax > 0 else np.nan
+            res[sym] = float(np.clip(val, 0.0, 1.0)) if np.isfinite(val) else np.nan
+
         out["value"] = out["symbol"].map(res)
         return out
 
-feature = NGiniFeature()
+
+feature = NEntropyConcentrationFeature()

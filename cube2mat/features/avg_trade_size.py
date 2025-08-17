@@ -5,7 +5,6 @@ import numpy as np
 import pandas as pd
 from feature_base import BaseFeature, FeatureContext
 
-
 class AvgTradeSizeFeature(BaseFeature):
     """
     09:30–15:59 内，按 symbol 计算：
@@ -63,6 +62,5 @@ class AvgTradeSizeFeature(BaseFeature):
         out = sample[["symbol"]].copy()
         out["value"] = out["symbol"].map(agg["value"])
         return out
-
 
 feature = AvgTradeSizeFeature()

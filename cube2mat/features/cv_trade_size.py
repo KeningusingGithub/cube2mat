@@ -1,10 +1,9 @@
-# features/cv_trade_size.py
+# cube2mat/features/cv_trade_size.py
 from __future__ import annotations
 import datetime as dt
 import numpy as np
 import pandas as pd
 from feature_base import BaseFeature, FeatureContext
-
 
 class CVTradeSizeFeature(BaseFeature):
     """
@@ -48,6 +47,5 @@ class CVTradeSizeFeature(BaseFeature):
 
         out["value"] = out["symbol"].map(res)
         return out
-
 
 feature = CVTradeSizeFeature()

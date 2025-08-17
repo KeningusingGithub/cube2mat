@@ -1,4 +1,4 @@
-# features/n_front_loading_score.py
+# cube2mat/features/n_front_loading_score.py
 from __future__ import annotations
 import datetime as dt
 import numpy as np
@@ -6,7 +6,6 @@ import pandas as pd
 from feature_base import BaseFeature, FeatureContext
 
 TOT_MIN = 389.0  # 09:30–15:59
-
 
 class NFrontLoadingScoreFeature(BaseFeature):
     """
@@ -53,6 +52,7 @@ class NFrontLoadingScoreFeature(BaseFeature):
                 res[sym] = np.nan; continue
             tf = ((g.index - start).total_seconds() / 60.0) / TOT_MIN
             y  = g["n"].cumsum() / nsum
+            # ensure anchors at (0,0) and (1,1)
             x_arr = tf.to_numpy()
             y_arr = y.to_numpy()
             if x_arr.size < 2:
@@ -67,6 +67,5 @@ class NFrontLoadingScoreFeature(BaseFeature):
 
         out["value"] = out["symbol"].map(res)
         return out
-
 
 feature = NFrontLoadingScoreFeature()

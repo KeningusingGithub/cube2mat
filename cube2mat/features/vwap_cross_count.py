@@ -1,10 +1,9 @@
-# features/vwap_cross_count.py
+# cube2mat/features/vwap_cross_count.py
 from __future__ import annotations
 import datetime as dt
 import numpy as np
 import pandas as pd
 from feature_base import BaseFeature, FeatureContext
-
 
 class VWAPCrossCountFeature(BaseFeature):
     """
@@ -43,6 +42,5 @@ class VWAPCrossCountFeature(BaseFeature):
             res[sym] = float(flips)
         out["value"] = out["symbol"].map(res)
         return out
-
 
 feature = VWAPCrossCountFeature()

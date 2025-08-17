@@ -1,10 +1,9 @@
-# features/n_gini.py
+# cube2mat/features/n_gini.py
 from __future__ import annotations
 import datetime as dt
 import numpy as np
 import pandas as pd
 from feature_base import BaseFeature, FeatureContext
-
 
 class NGiniFeature(BaseFeature):
     """
@@ -26,6 +25,7 @@ class NGiniFeature(BaseFeature):
             return np.nan
         xs = np.sort(x)
         cum = np.cumsum(xs)
+        # Gini = 1 - 2 * sum((n - i + 0.5) * x_i) / (n * sum(x))
         i = np.arange(1, n + 1)
         g = 1.0 - 2.0 * np.sum((n - i + 0.5) * xs) / (n * s)
         return float(np.clip(g, 0.0, 1.0))
@@ -50,6 +50,5 @@ class NGiniFeature(BaseFeature):
             res[sym] = self._gini(g.sort_index()["n"].to_numpy())
         out["value"] = out["symbol"].map(res)
         return out
-
 
 feature = NGiniFeature()

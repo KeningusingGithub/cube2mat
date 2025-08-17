@@ -7,11 +7,11 @@ from feature_base import BaseFeature, FeatureContext
 class StdCloseFeature(BaseFeature):
     """
     09:30–15:59(交易所本地时区，默认 America/New_York) 内，
-    按 symbol 计算 close 的标准差；若该 symbol 当日有效点 < 3，则置为 NaN。
+    按 symbol 计算 close 的样本标准差(ddof=1)；若有效样本<2，则置为 NaN。
     输出列至少包含: ['symbol', 'value']。
     """
     name = "std_close"
-    description = "Intraday close std between 09:30–15:59; NaN if <3 ticks."
+    description = "Sample std (ddof=1) of close within 09:30–15:59; NaN if <2 ticks."
     required_full_columns = ("symbol", "time", "close")
     required_pv_columns = ("symbol",)
 
@@ -54,10 +54,10 @@ class StdCloseFeature(BaseFeature):
             out["value"] = pd.NA
             return out
 
-        # 兼容所有 pandas：std + count，再把 n<3 的设为 NaN
+        # 兼容所有 pandas：std + count，再把 n<2 的设为 NaN
         g = df_intraday.groupby("symbol")["close"]
-        stats = g.agg(n="count", std="std")
-        vol = stats["std"].where(stats["n"] >= 3)
+        stats = g.agg(n="count", std=lambda s: s.std(ddof=1))
+        vol = stats["std"].where(stats["n"] >= 2)
 
         # 按样本顺序对齐输出
         out = sample[["symbol"]].copy()

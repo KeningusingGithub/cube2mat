@@ -10,9 +10,9 @@ import os
 # ---------- 公共上下文 ----------
 @dataclass
 class FeatureContext:
-    pv_dir: Path                   # 如 /home/ubuntu/dataraw/us/pv
-    full_dir: Path                 # 如 /home/ubuntu/dataraw/us/cubefull
-    out_root: Path                 # 如 /home/ubuntu/dataraw/us/cube2mat
+    pv_dir: Path                   # 如 ../dataraw/us/pv
+    full_dir: Path                 # 如 ../dataraw/us/cubefull
+    out_root: Path                 # 如 ../dataraw/us/cube2mat
     tz: str = "America/New_York"   # 交易所本地时区，默认美东
     atomic_write: bool = True
     parquet_compression: Optional[str] = "snappy"

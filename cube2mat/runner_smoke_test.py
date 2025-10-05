@@ -11,6 +11,9 @@ from typing import Optional, Iterable, Tuple, Dict, Any
 
 from feature_base import BaseFeature, FeatureContext, get_dates_from_pv
 
+# 单一日志文件，位于本脚本同路径
+LOG_PATH = Path(__file__).with_name("smoke_fail.log")
+
 
 # ---------- 动态加载 feature 模块（与原 runner 等价） ----------
 def load_feature_from_file(pyfile: Path) -> Optional[BaseFeature]:
@@ -82,8 +85,24 @@ def smoke_one_feature(args: Tuple[str, Dict[str, Any], str]) -> Tuple[str, str, 
 
     # 在子进程里各自 import，互不影响
     feature = load_feature_from_file(py_path)
+
+    def _make_result(
+        status: str, info: str, data: str | None = None
+    ) -> Tuple[str, str, str, str]:
+        feat_name = getattr(feature, "name", py_path.stem)
+        if status != "PASS":
+            try:
+                with open(LOG_PATH, "a", encoding="utf-8") as fh:
+                    fh.write(f"{py_path.name} | {feat_name} | {status} | {info}\n")
+                    if data:
+                        fh.write(f"{data}\n")
+                    fh.write("\n")
+            except Exception:
+                pass
+        return (py_path.name, feat_name, status, info)
+
     if feature is None:
-        return (py_path.name, py_path.stem, "LOAD_FAIL", "加载/导入失败")
+        return _make_result("LOAD_FAIL", "加载/导入失败")
 
     # 防止被“已存在”逻辑跳过
     try:
@@ -111,59 +130,55 @@ def smoke_one_feature(args: Tuple[str, Dict[str, Any], str]) -> Tuple[str, str, 
 
             # ---- 校验 ----
             if df is None:
-                return (py_path.name, getattr(feature, "name", py_path.stem), "FAIL", "process_date 返回 None/被跳过")
+                return _make_result("FAIL", "process_date 返回 None/被跳过")
 
             # DataFrame 基本格式
             if not hasattr(df, "columns"):
-                return (py_path.name, getattr(feature, "name", py_path.stem), "FAIL", "输出不是 DataFrame")
+                return _make_result("FAIL", "输出不是 DataFrame", data=str(df))
 
             missing_cols = [c for c in ("symbol", "value") if c not in df.columns]
             if missing_cols:
-                return (
-                    py_path.name,
-                    getattr(feature, "name", py_path.stem),
+                return _make_result(
                     "FAIL",
                     f"缺少必要列: {missing_cols}",
+                    data=df.head().to_csv(index=False),
                 )
 
             if df.empty:
-                return (py_path.name, getattr(feature, "name", py_path.stem), "FAIL", "输出为空 DataFrame")
+                return _make_result(
+                    "FAIL", "输出为空 DataFrame", data=df.head().to_csv(index=False)
+                )
 
             # 质量：value 至少有一个非空
             non_null_mask = df["value"].notna()
             if not bool(non_null_mask.any()):
-                return (
-                    py_path.name,
-                    getattr(feature, "name", py_path.stem),
-                    "FAIL",
-                    "value 全为 NaN/None",
+                return _make_result(
+                    "FAIL", "value 全为 NaN/None", data=df.head().to_csv(index=False)
                 )
 
             # symbol 也不应全空
             if "symbol" in df.columns and bool(getattr(df["symbol"], "isna", lambda: False)().all()):
-                return (
-                    py_path.name,
-                    getattr(feature, "name", py_path.stem),
-                    "FAIL",
-                    "symbol 全为空",
+                return _make_result(
+                    "FAIL", "symbol 全为空", data=df.head().to_csv(index=False)
                 )
 
             # 通过
             info = f"rows={len(df)}, non_null_value={int(non_null_mask.sum())}"
-            return (py_path.name, getattr(feature, "name", py_path.stem), "PASS", info)
+            return _make_result("PASS", info)
 
     except Exception:
-        return (py_path.name, getattr(feature, "name", py_path.stem), "FAIL", f"异常: {traceback.format_exc()}")
+        return _make_result("FAIL", f"异常: {traceback.format_exc()}")
 
 
 # ---------- 主逻辑 ----------
 def parse_args():
     base_dir = Path(__file__).resolve().parent
+    dataraw_root = base_dir.parent.parent.parent / 'dataraw'
     ap = argparse.ArgumentParser(
         description="Feature smoke tester: 扫描 features/*.py，单日跑通检查（不落盘）"
     )
-    ap.add_argument("--pv-dir", default="/home/ubuntu/dataraw/us/pv")
-    ap.add_argument("--full-dir", default="/home/ubuntu/dataraw/us/cubefull")
+    ap.add_argument("--pv-dir", default=str(dataraw_root / "us" / "basedata" / "close"))
+    ap.add_argument("--full-dir", default=str(dataraw_root / "us" / "cubefull"))
     ap.add_argument("--features-dir", default=str(base_dir / "features"))
 
     ap.add_argument("--tz", default="America/New_York")
@@ -205,6 +220,12 @@ def pick_test_date(
 
 def main():
     args = parse_args()
+
+    # 清理旧日志
+    try:
+        LOG_PATH.unlink()
+    except FileNotFoundError:
+        pass
 
     pv_dir = Path(args.pv_dir)
     full_dir = Path(args.full_dir)

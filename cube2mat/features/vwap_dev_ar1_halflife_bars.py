@@ -48,15 +48,12 @@ class VWAPDevAR1HalfLifeBarsFeature(BaseFeature):
             y = d[1:]
             x = d[:-1]
             X = np.column_stack([np.ones(x.size), x])
-            try:
-                beta, _ = np.linalg.lstsq(X, y, rcond=None)
-                phi = float(beta[1])
-                if 0 < phi < 1:
-                    hl = -log(2) / log(phi)
-                    res[sym] = float(hl) if np.isfinite(hl) else np.nan
-                else:
-                    res[sym] = np.nan
-            except Exception:
+            beta = np.linalg.lstsq(X, y, rcond=None)[0]
+            phi = float(beta[1])
+            if 0 < phi < 1:
+                hl = -log(2) / log(phi)
+                res[sym] = float(hl) if np.isfinite(hl) else np.nan
+            else:
                 res[sym] = np.nan
 
         out["value"] = out["symbol"].map(res)

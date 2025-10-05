@@ -48,7 +48,7 @@ class RetNextOnVWAPDevBetaFeature(BaseFeature):
                 res[sym] = np.nan
                 continue
             X = np.column_stack([np.ones(len(xy)), xy.iloc[:, 0].to_numpy()])
-            beta, _ = np.linalg.lstsq(X, xy.iloc[:, 1].to_numpy(), rcond=None)
+            beta = np.linalg.lstsq(X, xy.iloc[:, 1].to_numpy(), rcond=None)[0]
             res[sym] = float(beta[1])
 
         out["value"] = out["symbol"].map(res)

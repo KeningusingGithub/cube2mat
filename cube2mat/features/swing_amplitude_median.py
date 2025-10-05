@@ -18,12 +18,11 @@ def _run_amplitudes(sgn: np.ndarray, r: np.ndarray):
     s = pd.Series(sgn).astype(int).replace(0, np.nan).dropna().astype(int)
     if s.empty:
         return []
-    idx = s.index.to_numpy()
     starts = (s != s.shift()).cumsum()
     amps: list[float] = []
     for _, loc in s.groupby(starts).groups.items():
-        loc = list(loc)
-        amps.append(np.abs(r[idx[loc]].sum()))
+        idx = np.array(loc, dtype=int)
+        amps.append(float(np.abs(r[idx].sum())))
     return amps
 
 

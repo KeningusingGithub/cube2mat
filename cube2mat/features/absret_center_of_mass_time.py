@@ -56,7 +56,10 @@ class AbsRetCenterOfMassTimeFeature(BaseFeature):
                 .replace([np.inf, -np.inf], np.nan)
             )
             start = self._start(g.index)
-            tf = ((g.index - start).total_seconds() / 60.0) / self.TOTAL_MIN
+            tf = pd.Series(
+                ((g.index - start).total_seconds() / 60.0) / self.TOTAL_MIN,
+                index=g.index,
+            )
             dfw = pd.DataFrame({"tf": tf.iloc[1:], "a": r.abs()}).dropna()
             if len(dfw) < 3:
                 res[sym] = np.nan

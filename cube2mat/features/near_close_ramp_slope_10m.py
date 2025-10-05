@@ -32,7 +32,7 @@ class NearCloseRampSlope10mFeature(BaseFeature):
             if len(g)<2: res[sym]=np.nan; continue
             t=(g.index - g.index[0]).total_seconds()/60.0
             X=np.column_stack([np.ones(len(g)), t.to_numpy()])
-            beta,_=np.linalg.lstsq(X, g["close"].to_numpy(float), rcond=None)
+            beta = np.linalg.lstsq(X, g["close"].to_numpy(float), rcond=None)[0]
             res[sym]=float(beta[1])
         out["value"]=out["symbol"].map(res); return out
 

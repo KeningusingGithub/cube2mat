@@ -97,10 +97,11 @@ def run_one_date_for_feature(args):
 # ---------- 主逻辑 ----------
 def parse_args():
     base_dir = Path(__file__).resolve().parent
+    dataraw_root = base_dir.parent.parent.parent / "dataraw"
     ap = argparse.ArgumentParser(description="Feature runner: 扫描 features/*.py 并按日期批量计算")
-    ap.add_argument("--pv-dir", default="/home/ubuntu/dataraw/us/pv")
-    ap.add_argument("--full-dir", default="/home/ubuntu/dataraw/us/cubefull")
-    ap.add_argument("--out-root", default="/home/ubuntu/dataraw/us/cube2mat_new")
+    ap.add_argument("--pv-dir", default=str(dataraw_root / "us" / "basedata" / "close"))
+    ap.add_argument("--full-dir", default=str(dataraw_root / "us" / "cubefull"))
+    ap.add_argument("--out-root", default=str(dataraw_root / "us" / "cube2mat"))
     ap.add_argument("--tz", default="America/New_York")
     ap.add_argument("--start", default="2018-07-01", help="开始日期 YYYY-MM-DD")
     ap.add_argument("--end", default=None, help="结束日期 YYYY-MM-DD，默认= cubefull 目录最新日期")

@@ -54,8 +54,8 @@ class XCorrSignVolumeLeadLagPeakFeature(BaseFeature):
         res: dict[str, float] = {}
         for sym, g in df.groupby("symbol", sort=False):
             g = g.sort_index()
-            sgn = np.sign(g["close"].pct_change()).to_numpy(dtype=float)
-            v = g["volume"].to_numpy(dtype=float)
+            sgn = np.sign(g["close"].pct_change()).to_numpy(dtype=float)[1:]
+            v = g["volume"].to_numpy(dtype=float)[1:]
             n = sgn.size
             if n < K + 3:
                 res[sym] = np.nan
@@ -66,12 +66,11 @@ class XCorrSignVolumeLeadLagPeakFeature(BaseFeature):
                     x = sgn[-lag:]
                     y = v[: n + lag]
                 elif lag > 0:
-                    x = sgn[: -lag]
+                    x = sgn[: n - lag]
                     y = v[lag:]
                 else:
                     x = sgn
                     y = v
-                x = x[1:]
                 if x.size < 3 or y.size < 3 or x.size != y.size:
                     continue
                 c = self._corr(x, y)

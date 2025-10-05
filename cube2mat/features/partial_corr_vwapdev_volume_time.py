@@ -44,13 +44,13 @@ class PartialCorrVWAPDevVolumeTimeFeature(BaseFeature):
             v=g["volume"]
             if len(a)<3: res[sym]=np.nan; continue
             t0=g.index[0]
-            tf=((g.index - t0).total_seconds()/60.0)/TOT_MIN
+            tf=pd.Series(((g.index - t0).total_seconds()/60.0)/TOT_MIN, index=g.index)
             D=pd.DataFrame({"a":a,"v":v,"t":tf}).dropna()
             if len(D)<3: res[sym]=np.nan; continue
             n=len(D)
             X=np.column_stack([np.ones(n), D["t"].to_numpy(float)])
-            beta_a,_=np.linalg.lstsq(X, D["a"].to_numpy(float), rcond=None)
-            beta_v,_=np.linalg.lstsq(X, D["v"].to_numpy(float), rcond=None)
+            beta_a, *_ = np.linalg.lstsq(X, D["a"].to_numpy(float), rcond=None)
+            beta_v, *_ = np.linalg.lstsq(X, D["v"].to_numpy(float), rcond=None)
             ra=D["a"].to_numpy(float) - X@beta_a
             rv=D["v"].to_numpy(float) - X@beta_v
             res[sym]=self._corr(ra,rv)

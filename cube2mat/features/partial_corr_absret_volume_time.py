@@ -68,8 +68,10 @@ class PartialCorrAbsRetVolumeTimeFeature(BaseFeature):
             a = r.abs().iloc[1:]
             v = g["volume"].iloc[1:]
             t0 = g.index[0]
-            tf = ((g.index - t0).total_seconds() / 60.0) / self.TOTAL_MIN
-            tf = tf.iloc[1:]
+            tf = pd.Series(
+                ((g.index - t0).total_seconds() / 60.0) / self.TOTAL_MIN,
+                index=g.index,
+            ).iloc[1:]
             df2 = pd.DataFrame({"a": a, "v": v, "t": tf}).dropna()
             if len(df2) < 3:
                 res[sym] = np.nan

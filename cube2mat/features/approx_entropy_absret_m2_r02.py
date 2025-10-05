@@ -21,12 +21,13 @@ def _apen(x: np.ndarray, m: int = 2, r: float | None = None) -> float:
         if not np.isfinite(r) or r <= 0:
             return float("nan")
     def _phi(mm: int) -> float:
-        C = []
-        for i in range(n - mm + 1):
-            xi = x[i : i + mm]
-            d = np.max(np.abs(x[i : i + mm][None, :] - x[np.arange(n - mm + 1)][:, None, :mm]), axis=2)
-            C.append(np.mean((d <= r).astype(float)))
-        C = np.array(C)
+        if n - mm + 1 <= 0:
+            return float("nan")
+        X = np.array([x[i : i + mm] for i in range(n - mm + 1)])
+        if X.size == 0:
+            return float("nan")
+        diff = np.abs(X[:, None, :] - X[None, :, :])
+        C = (diff.max(axis=2) <= r).mean(axis=1)
         C = C[C > 0]
         return float(np.mean(np.log(C))) if C.size > 0 else float("nan")
     p1 = _phi(m)

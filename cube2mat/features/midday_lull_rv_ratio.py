@@ -32,12 +32,11 @@ class MiddayLullRVRatioFeature(BaseFeature):
         res={}
         for sym,g in rth.groupby("symbol",sort=False):
             g=g.sort_index()
-            r=np.log(g["close"]).diff().replace([np.inf,-np.inf],np.nan)
-            total=float((r.dropna()**2).sum()); cnt_total=int(r.dropna().shape[0])
+            r=np.log(g["close"]).diff().replace([np.inf,-np.inf],np.nan).iloc[1:]
+            total=float((r**2).sum()); cnt_total=int(r.shape[0])
             m=mid[mid.symbol==sym].sort_index()
             if m.empty or cnt_total<3 or total<=0:
                 res[sym]=np.nan; continue
-            r.index=g.index[1:]
             rv_mid=float((r[r.index.isin(m.index)]**2).sum())
             cnt_mid=int(r.index.isin(m.index).sum())
             if cnt_mid==0: res[sym]=np.nan; continue

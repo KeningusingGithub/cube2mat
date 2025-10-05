@@ -32,7 +32,7 @@ class VWAPDevAR1PhiFeature(BaseFeature):
             y=d[1:]; x=d[:-1]
             X=np.column_stack([np.ones_like(x), x])
             try:
-                beta,_=np.linalg.lstsq(X,y,rcond=None)
+                beta = np.linalg.lstsq(X,y,rcond=None)[0]
                 res[sym]=float(beta[1])
             except Exception:
                 res[sym]=np.nan

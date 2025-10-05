@@ -44,7 +44,7 @@ class WaveletEnergyHighfreqShareFeature(BaseFeature):
             if n<8: res[sym]=np.nan; continue
             t=np.linspace(0,1,n)
             X=np.column_stack([np.ones(n), t])
-            beta,_=np.linalg.lstsq(X,y,rcond=None)
+            beta = np.linalg.lstsq(X,y,rcond=None)[0]
             e=y - X@beta; e=e - e.mean()
             tot=float(np.sum(e*e))
             if tot<=0: res[sym]=np.nan; continue

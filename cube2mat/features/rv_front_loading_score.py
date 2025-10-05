@@ -65,8 +65,10 @@ class RVFrontLoadingScoreFeature(BaseFeature):
                 res[sym] = np.nan
                 continue
             start = self._start(g.index)
-            x = ((g.index - start).total_seconds() / 60.0) / self.TOTAL_MIN
-            x = x.iloc[1:]
+            x = pd.Series(
+                ((g.index - start).total_seconds() / 60.0) / self.TOTAL_MIN,
+                index=g.index,
+            ).iloc[1:]
             y = rsq.cumsum() / total
             x_arr = x.to_numpy()
             y_arr = y.to_numpy()

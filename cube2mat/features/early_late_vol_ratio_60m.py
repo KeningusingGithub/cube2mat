@@ -20,6 +20,8 @@ class EarlyLateVolRatio60mFeature(BaseFeature):
 
     @staticmethod
     def _std_ret(s: pd.Series) -> float:
+        if s.size == 0:
+            return np.nan
         r = s.pct_change().replace([np.inf, -np.inf], np.nan).dropna()
         return float(r.std(ddof=1)) if len(r) >= 2 else np.nan
 

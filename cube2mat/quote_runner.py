@@ -10,7 +10,7 @@ from typing import Optional, Iterable, List, Set, Dict, Any
 
 from feature_base import BaseFeature, FeatureContext, get_dates_from_pv
 
-# ---------- 动态加载 feature 模块（与原 runner 相同逻辑） ----------
+# ===================== 动态加载 feature 模块（与原 runner 相同逻辑） =====================
 def load_feature_from_file(pyfile: Path) -> Optional[BaseFeature]:
     """
     支持两种写法：
@@ -69,40 +69,171 @@ def discover_features(feat_dir: Path, include: Optional[Iterable[str]] = None, e
     return feats
 
 
-# ---------- 日期扫描（基于 quote 根目录） ----------
-def infer_latest_date_from_quote_root(quote_root: Path) -> Optional[dt.date]:
+# ===================== 新增：quote 布局探测 & 日期扫描（兼容 dir 与 onefile） =====================
+def detect_quote_layout(quote_root: Path) -> str:
     """
-    扫描 quote_root 下的形如 YYYYMMDD 的子目录，取其中最新的日期。
+    返回 'onefile' | 'dir' | 'unknown'
+    onefile: 根目录下存在形如 YYYYMMDD.parquet / .parq 的文件
+    dir    : 根目录下存在形如 YYYYMMDD 的子目录
+    """
+    has_onefile = any(
+        p.is_file() and p.suffix.lower() in (".parquet", ".parq") and len(p.stem) == 8 and p.stem.isdigit()
+        for p in quote_root.iterdir()
+    )
+    has_dir = any(
+        p.is_dir() and len(p.name) == 8 and p.name.isdigit()
+        for p in quote_root.iterdir()
+    )
+    if has_onefile and not has_dir:
+        return "onefile"
+    if has_dir and not has_onefile:
+        return "dir"
+    if has_onefile and has_dir:
+        # 如果二者都存在，优先 onefile（也可以调整为打印警告后使用 --quote-layout 显式指定）
+        print("[detect] 同时检测到 onefile 与 dir，默认使用 onefile（可用 --quote-layout 指定）")
+        return "onefile"
+    return "unknown"
+
+
+def infer_latest_date_from_quote(quote_root: Path, layout: str) -> Optional[dt.date]:
+    """
+    扫描 quote_root 下的可用日期，返回最新的日期。
+    layout: 'dir' -> 扫目录名；'onefile' -> 扫文件名（YYYYMMDD.parquet / .parq）
     """
     latest: Optional[dt.date] = None
-    for p in quote_root.iterdir():
-        if p.is_dir() and len(p.name) == 8 and p.name.isdigit():
-            try:
-                d = dt.datetime.strptime(p.name, "%Y%m%d").date()
-            except ValueError:
-                continue
-            if latest is None or d > latest:
-                latest = d
+    if layout == "dir":
+        for p in quote_root.iterdir():
+            if p.is_dir() and len(p.name) == 8 and p.name.isdigit():
+                try:
+                    d = dt.datetime.strptime(p.name, "%Y%m%d").date()
+                except ValueError:
+                    continue
+                if latest is None or d > latest:
+                    latest = d
+    elif layout == "onefile":
+        for p in quote_root.iterdir():
+            if p.is_file() and p.suffix.lower() in (".parquet", ".parq") and len(p.stem) == 8 and p.stem.isdigit():
+                try:
+                    d = dt.datetime.strptime(p.stem, "%Y%m%d").date()
+                except ValueError:
+                    continue
+                if latest is None or d > latest:
+                    latest = d
     return latest
 
 
-def get_dates_from_quote_root(quote_root: Path, start_date: dt.date, end_date: dt.date) -> list[dt.date]:
+def get_dates_from_quote(quote_root: Path, start_date: dt.date, end_date: dt.date, layout: str) -> list[dt.date]:
     """
-    返回位于 [start_date, end_date] 且在 quote_root 下存在对应 YYYYMMDD 目录的日期列表。
+    返回位于 [start_date, end_date] 且在 quote_root 下存在对应数据的日期列表。
+    layout: 'dir' | 'onefile'
     """
     avail: Set[dt.date] = set()
-    for p in quote_root.iterdir():
-        if p.is_dir() and len(p.name) == 8 and p.name.isdigit():
-            try:
-                d = dt.datetime.strptime(p.name, "%Y%m%d").date()
-            except ValueError:
-                continue
-            if start_date <= d <= end_date:
-                avail.add(d)
+    if layout == "dir":
+        for p in quote_root.iterdir():
+            if p.is_dir() and len(p.name) == 8 and p.name.isdigit():
+                try:
+                    d = dt.datetime.strptime(p.name, "%Y%m%d").date()
+                except ValueError:
+                    continue
+                if start_date <= d <= end_date:
+                    avail.add(d)
+    elif layout == "onefile":
+        for p in quote_root.iterdir():
+            if p.is_file() and p.suffix.lower() in (".parquet", ".parq") and len(p.stem) == 8 and p.stem.isdigit():
+                try:
+                    d = dt.datetime.strptime(p.stem, "%Y%m%d").date()
+                except ValueError:
+                    continue
+                if start_date <= d <= end_date:
+                    avail.add(d)
     return sorted(avail)
 
 
-# ---------- 单日执行（供多进程调用） ----------
+# ===================== 单日执行（供多进程调用） =====================
+def _attach_quote_helpers(ctx: FeatureContext):
+    """
+    根据 ctx.quote_layout 为 FeatureContext 动态挂载读数辅助函数。
+    - onefile:
+        ctx.get_day_parquet(date) -> Path
+        ctx.iterate_day_for_symbol(date, symbol, columns=None, batch_size=...) -> yield pd.DataFrame
+        ctx.iterate_day_in_batches(date, columns=None, batch_size=...) -> yield pd.DataFrame
+    - dir:
+        ctx.get_symbol_parquet(date, symbol) -> Path
+        同名 iterate_* 方法也可用（内部以单文件读取）
+    """
+    import importlib
+
+    layout = getattr(ctx, "quote_layout", "dir")
+    quote_root = Path(getattr(ctx, "quote_root"))
+
+    if layout == "onefile":
+        # 惰性导入 pyarrow，仅在需要 onefile 时导入
+        ds = importlib.import_module("pyarrow.dataset")
+        pq = importlib.import_module("pyarrow.parquet")
+
+        def get_day_parquet(date: dt.date) -> Path:
+            return quote_root / f"{date.strftime('%Y%m%d')}.parquet"
+
+        def iterate_day_for_symbol(date: dt.date, symbol: str,
+                                   columns: list[str] | None = None, batch_size: int = 200_000):
+            path = get_day_parquet(date)
+            dataset = ds.dataset(str(path), format="parquet")
+            predicate = (ds.field("symbol") == symbol)
+            for batch in dataset.to_batches(filter=predicate, columns=columns, batch_size=batch_size):
+                yield batch.to_pandas(copy=False)
+
+        def iterate_day_in_batches(date: dt.date,
+                                   columns: list[str] | None = None, batch_size: int = 200_000):
+            path = get_day_parquet(date)
+            pfq = pq.ParquetFile(str(path))
+            for batch in pfq.iter_batches(batch_size=batch_size, columns=columns):
+                yield batch.to_pandas(copy=False)
+
+        # 挂载
+        setattr(ctx, "get_day_parquet", get_day_parquet)
+        setattr(ctx, "iterate_day_for_symbol", iterate_day_for_symbol)
+        setattr(ctx, "iterate_day_in_batches", iterate_day_in_batches)
+
+    else:
+        # 旧目录式：YYYYMMDD/SYMBOL.parquet
+        import pandas as pd
+
+        def get_day_dir(date: dt.date) -> Path:
+            return quote_root / date.strftime("%Y%m%d")
+
+        def get_symbol_parquet(date: dt.date, symbol: str) -> Path:
+            return get_day_dir(date) / f"{symbol}.parquet"
+
+        def iterate_day_for_symbol(date: dt.date, symbol: str,
+                                   columns: list[str] | None = None, batch_size: int = 200_000):
+            """兼容 onefile 的同名接口：这里直接整文件读取（如需流式，可自行按你的旧格式实现 chunk 读）。"""
+            path = get_symbol_parquet(date, symbol)
+            if not path.exists():
+                return
+            # pandas.read_parquet 依赖 pyarrow 或 fastparquet，保持最简实现
+            df = pd.read_parquet(path, columns=columns)
+            # 对齐 onefile 接口：一次性 yield 一块
+            yield df
+
+        def iterate_day_in_batches(date: dt.date,
+                                   columns: list[str] | None = None, batch_size: int = 200_000):
+            """目录式的全日扫描（简单实现：遍历所有 symbol 文件逐个 yield）。"""
+            day_dir = get_day_dir(date)
+            if not day_dir.exists():
+                return
+            for f in sorted(day_dir.glob("*.parquet")):
+                try:
+                    df = pd.read_parquet(f, columns=columns)
+                except Exception:
+                    continue
+                yield df
+
+        setattr(ctx, "get_day_dir", get_day_dir)
+        setattr(ctx, "get_symbol_parquet", get_symbol_parquet)
+        setattr(ctx, "iterate_day_for_symbol", iterate_day_for_symbol)
+        setattr(ctx, "iterate_day_in_batches", iterate_day_in_batches)
+
+
 def run_one_date_for_feature(args):
     feat_file, ctx_kwargs, extra_ctx_attrs, date_iso = args
     # 每个子进程独立 import，避免跨进程序列化复杂对象
@@ -112,9 +243,15 @@ def run_one_date_for_feature(args):
 
     # 仅用构造函数支持的参数初始化
     ctx = FeatureContext(**ctx_kwargs)
-    # 再设置额外上下文字段（例如 quote_root）
+    # 再设置额外上下文字段（例如 quote_root / quote_layout）
     for k, v in (extra_ctx_attrs or {}).items():
         setattr(ctx, k, v)
+
+    # 挂载布局相关的读数 helper
+    try:
+        _attach_quote_helpers(ctx)
+    except Exception:
+        return (feature.name, date_iso, f"error:attach_helpers_failed:{traceback.format_exc()}")
 
     date = dt.date.fromisoformat(date_iso)
 
@@ -135,14 +272,18 @@ def run_one_date_for_feature(args):
         return (feature.name, date_iso, f"error:{traceback.format_exc()}")
 
 
-# ---------- 主逻辑 ----------
+# ===================== 主逻辑 =====================
 def parse_args():
     base_dir = Path(__file__).resolve().parent
-    ap = argparse.ArgumentParser(description="Quote Feature runner: 扫描 quote_features/*.py 并按日期批量计算")
-    ap.add_argument("--pv-dir", default="/home/ubuntu/dataraw/us/pv", help="用于样本与日期扫描（若 --date-source=pv 或 intersect）")
-    ap.add_argument("--full-dir", default="/home/ubuntu/dataraw/us/cubefull", help="与 FeatureContext 兼容所需（即使 quote 特征可能用不上）")
-    ap.add_argument("--quote-root", default="/home/ubuntu/dataraw/us/quote", help="quote 数据根目录（YYYYMMDD/SYMBOL.parquet）")
-    ap.add_argument("--out-root", default="/home/ubuntu/dataraw/us/quote_features", help="特征输出根目录")
+    dataraw_root = base_dir.parent.parent.parent / "dataraw"
+    ap = argparse.ArgumentParser(description="Quote Feature runner: 扫描 quote_features/*.py 并按日期批量计算（兼容目录式与onefile）")
+    ap.add_argument("--pv-dir", default=str(dataraw_root / "us" / "basedata" / "close"), help="用于样本与日期扫描（若 --date-source=pv 或 intersect）")
+    ap.add_argument("--full-dir", default=str(dataraw_root / "us" / "cubefull"), help="与 FeatureContext 兼容所需（即使 quote 特征可能用不上）")
+
+    # 重要：quote 根目录可指向 1) 旧目录式 dataraw/us/quote  或  2) 新 onefile 式 dataraw/us/quote_onefile
+    ap.add_argument("--quote-root", default=str(dataraw_root / "us" / "quote_onefile"),
+                    help="quote 数据根目录：onefile 模式下放 YYYYMMDD.parquet；目录式为 YYYYMMDD/SYMBOL.parquet")
+    ap.add_argument("--out-root", default=str(dataraw_root / "us" / "quote_features"), help="特征输出根目录")
     ap.add_argument("--tz", default="America/New_York")
     ap.add_argument("--start", default="2018-07-01", help="开始日期 YYYY-MM-DD")
     ap.add_argument("--end", default=None, help="结束日期 YYYY-MM-DD；默认按 --date-source 推断")
@@ -153,7 +294,9 @@ def parse_args():
     ap.add_argument("--chunksize", type=int, default=4)
     ap.add_argument("--overwrite", action="store_true", help="忽略 skip_if_exists，强制重算")
     ap.add_argument("--date-source", choices=["pv", "quote", "intersect"], default="pv",
-                    help="日期来源：pv=从 pv 目录（支持 YYYY_M_D.parquet）；quote=从 quote 根目录；intersect=两者交集")
+                    help="日期来源：pv=从 pv 目录；quote=从 quote 根目录；intersect=两者交集")
+    ap.add_argument("--quote-layout", choices=["auto", "dir", "onefile"], default="auto",
+                    help="quote 数据布局：auto=自动探测；dir=YYYYMMDD/SYMBOL.parquet；onefile=YYYYMMDD.parquet")
     return ap.parse_args()
 
 
@@ -165,6 +308,14 @@ def main():
     out_root = Path(args.out_root)
     feat_dir = Path(args.features_dir)
 
+    # 布局探测/确定
+    if args.quote_layout == "auto":
+        layout = detect_quote_layout(quote_root)
+        if layout == "unknown":
+            raise SystemExit("quote_root 下既无 YYYYMMDD 目录也无 YYYYMMDD.parquet 文件，无法识别布局（可用 --quote-layout 指定）")
+    else:
+        layout = args.quote_layout
+
     # 结束日期默认推断
     if args.end is None:
         if args.date_source in ("pv", "intersect"):
@@ -174,9 +325,9 @@ def main():
                 raise SystemExit("pv 目录为空或文件名无法解析为日期，无法推断 end 日期（可显式指定 --end 或改用 --date-source=quote）")
             end_date = max(all_pv_dates)
         else:  # quote
-            latest = infer_latest_date_from_quote_root(quote_root)
+            latest = infer_latest_date_from_quote(quote_root, layout)
             if latest is None:
-                raise SystemExit("quote_root 下未发现 YYYYMMDD 子目录，无法推断 end 日期（请确认路径或显式指定 --end）")
+                raise SystemExit("quote_root 下未发现可用日期，无法推断 end 日期（请确认路径或显式指定 --end）")
             end_date = latest
     else:
         end_date = dt.date.fromisoformat(args.end)
@@ -187,14 +338,14 @@ def main():
     if args.date_source == "pv":
         dates = get_dates_from_pv(pv_dir, start_date, end_date)
     elif args.date_source == "quote":
-        dates = get_dates_from_quote_root(quote_root, start_date, end_date)
+        dates = get_dates_from_quote(quote_root, start_date, end_date, layout)
     else:  # intersect
         d1 = set(get_dates_from_pv(pv_dir, start_date, end_date))
-        d2 = set(get_dates_from_quote_root(quote_root, start_date, end_date))
+        d2 = set(get_dates_from_quote(quote_root, start_date, end_date, layout))
         dates = sorted(d1 & d2)
 
     if not dates:
-        raise SystemExit("未发现任何有效日期（检查 pv_dir/quote_root 与起止日期、以及 --date-source）")
+        raise SystemExit("未发现任何有效日期（检查 pv_dir/quote_root 与起止日期、以及 --date-source/--quote-layout）")
 
     # 扫描特征（传“文件路径”，子进程各自 import）
     feat_files: List[Path] = []
@@ -229,13 +380,14 @@ def main():
         )
         # 再挂载额外的上下文字段
         setattr(ctx, "quote_root", str(quote_root))
+        setattr(ctx, "quote_layout", layout)  # 新增：传递布局信息到特征
 
         feature.out_dir(ctx)  # ensure exists
 
         if args.overwrite:
             feature.skip_if_exists = False
 
-        print(f"=== 运行特征: {feature.name} | 文件: {py.name} | 日期数: {len(dates)} | date_source={args.date_source} ===")
+        print(f"=== 运行特征: {feature.name} | 文件: {py.name} | 日期数: {len(dates)} | date_source={args.date_source} | quote_layout={layout} ===")
 
         # 子进程任务参数：把构造参数与“额外上下文”分开传
         ctx_kwargs: Dict[str, Any] = {
@@ -248,6 +400,7 @@ def main():
         }
         extra_ctx_attrs: Dict[str, Any] = {
             "quote_root": str(quote_root),
+            "quote_layout": layout,
         }
 
         tasks = [(str(py), ctx_kwargs, extra_ctx_attrs, d.isoformat()) for d in dates]

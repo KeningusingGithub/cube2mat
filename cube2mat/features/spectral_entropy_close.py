@@ -34,7 +34,7 @@ class SpectralEntropyCloseFeature(BaseFeature):
             if n<8: res[sym]=np.nan; continue
             t=np.linspace(0.0,1.0,n,endpoint=True)
             X=np.column_stack([np.ones(n), t])
-            beta,_=np.linalg.lstsq(X,y,rcond=None)
+            beta = np.linalg.lstsq(X,y,rcond=None)[0]
             e=y - X@beta
             e=e - e.mean()
             powr = (np.fft.rfft(e) * np.fft.rfft(e).conj()).real

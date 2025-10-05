@@ -4,8 +4,11 @@ import os
 import glob
 import datetime as dt
 from typing import Iterable, Optional, Sequence, Dict, List, Set
+from pathlib import Path
 import pandas as pd
 from feature_base import BaseFeature, FeatureContext
+
+DATARAW_ROOT = Path(__file__).resolve().parents[1].parent / "dataraw"
 
 class QuoteBaseFeature(BaseFeature):
     """
@@ -17,7 +20,7 @@ class QuoteBaseFeature(BaseFeature):
     """
 
     # 默认根目录，可被 ctx.quote_root 覆盖
-    default_quote_root = "/home/ubuntu/dataraw/us/quote"
+    default_quote_root = str(DATARAW_ROOT / "us" / "quote")
 
     # 子类可覆盖：文件扩展名
     file_ext = ".parquet"

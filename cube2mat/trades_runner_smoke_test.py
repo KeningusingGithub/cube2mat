@@ -53,27 +53,70 @@ def load_feature_from_file(pyfile: Path) -> Optional[BaseFeature]:
         return None
 
 
-# ---------- trade 根目录日期扫描（兼容 dir 与 onefile） ----------
-def get_dates_from_trade_root(trade_root: Path, start: dt.date, end: dt.date) -> list[dt.date]:
+# ---------- trade 布局探测 & 日期扫描（兼容 dir 与 onefile） ----------
+def detect_trade_layout(trade_root: Path) -> str:
+    """返回 'onefile' | 'dir' | 'unknown'"""
+    has_onefile = any(
+        p.is_file() and p.suffix.lower() in (".parquet", ".parq") and len(p.stem) == 8 and p.stem.isdigit()
+        for p in trade_root.iterdir()
+    )
+    has_dir = any(
+        p.is_dir() and len(p.name) == 8 and p.name.isdigit()
+        for p in trade_root.iterdir()
+    )
+    if has_onefile and not has_dir:
+        return "onefile"
+    if has_dir and not has_onefile:
+        return "dir"
+    if has_onefile and has_dir:
+        print("[detect] 同时检测到 onefile 与 dir，默认使用 onefile（可用 --trade-layout 指定）")
+        return "onefile"
+    return "unknown"
+
+
+def get_dates_from_trade(trade_root: Path, start: dt.date, end: dt.date, layout: str) -> list[dt.date]:
     dates: set[dt.date] = set()
-    for p in trade_root.iterdir():
-        # 目录式
-        if p.is_dir() and len(p.name) == 8 and p.name.isdigit():
-            try:
-                d = dt.datetime.strptime(p.name, "%Y%m%d").date()
-            except ValueError:
-                continue
-            if start <= d <= end:
-                dates.add(d)
-        # onefile
-        if p.is_file() and p.suffix.lower() in (".parquet", ".parq") and len(p.stem) == 8 and p.stem.isdigit():
-            try:
-                d = dt.datetime.strptime(p.stem, "%Y%m%d").date()
-            except ValueError:
-                continue
-            if start <= d <= end:
-                dates.add(d)
+    if layout == "dir":
+        for p in trade_root.iterdir():
+            if p.is_dir() and len(p.name) == 8 and p.name.isdigit():
+                try:
+                    d = dt.datetime.strptime(p.name, "%Y%m%d").date()
+                except ValueError:
+                    continue
+                if start <= d <= end:
+                    dates.add(d)
+    elif layout == "onefile":
+        for p in trade_root.iterdir():
+            if p.is_file() and p.suffix.lower() in (".parquet", ".parq") and len(p.stem) == 8 and p.stem.isdigit():
+                try:
+                    d = dt.datetime.strptime(p.stem, "%Y%m%d").date()
+                except ValueError:
+                    continue
+                if start <= d <= end:
+                    dates.add(d)
+    else:
+        # layout 异常时直接返回空列表，由调用方处理
+        pass
     return sorted(dates)
+
+
+def discover_feature_files(
+    feat_dir: Path,
+    include: Optional[Iterable[str]] = None,
+    exclude: Optional[Iterable[str]] = None,
+) -> list[Path]:
+    include = set(include or [])
+    exclude = set(exclude or [])
+    files: list[Path] = []
+    for py in sorted(feat_dir.glob("*.py")):
+        if py.name.startswith("_"):
+            continue
+        if include and py.stem not in include:
+            continue
+        if py.stem in exclude:
+            continue
+        files.append(py)
+    return files
 
 
 def pick_test_date(
@@ -82,18 +125,23 @@ def pick_test_date(
     start: dt.date,
     end: Optional[dt.date],
     explicit_date: Optional[str],
+    date_source: str,
+    layout: str,
 ) -> dt.date:
     if explicit_date:
         return dt.date.fromisoformat(explicit_date)
 
-    if end is None:
-        pv_dates = set(get_dates_from_pv(pv_dir, start, dt.date(2100, 1, 1)))
-        trade_dates = set(get_dates_from_trade_root(trade_root, start, dt.date(2100, 1, 1)))
-    else:
-        pv_dates = set(get_dates_from_pv(pv_dir, start, end))
-        trade_dates = set(get_dates_from_trade_root(trade_root, start, end))
+    scan_end = end or dt.date(2100, 1, 1)
 
-    candidates = sorted(pv_dates & trade_dates)
+    if date_source == "pv":
+        candidates = get_dates_from_pv(pv_dir, start, scan_end)
+    elif date_source == "trade":
+        candidates = get_dates_from_trade(trade_root, start, scan_end, layout)
+    else:  # intersect
+        pv_dates = set(get_dates_from_pv(pv_dir, start, scan_end))
+        trade_dates = set(get_dates_from_trade(trade_root, start, scan_end, layout))
+        candidates = sorted(pv_dates & trade_dates)
+
     if not candidates:
         raise SystemExit("未发现任何有效测试日期（检查 pv_dir / trade_root）")
     return candidates[-1]
@@ -213,7 +261,12 @@ def smoke_one_feature(args: Tuple[str, Dict[str, Any], str]) -> Tuple[str, str, 
         with tempfile.TemporaryDirectory(prefix=f"trade_feat_smoke_{py_path.stem}_") as tmpdir:
             ctx_dict = dict(base_ctx_dict)
             ctx_dict["out_root"] = Path(tmpdir)
+            trade_root_val = ctx_dict.pop("trade_root", None)
+            trade_layout_val = ctx_dict.pop("trade_layout", "auto")
             ctx = FeatureContext(**ctx_dict)
+            if trade_root_val is not None:
+                setattr(ctx, "trade_root", trade_root_val)
+            setattr(ctx, "trade_layout", trade_layout_val)
 
             # 为最大兼容性，注入与 runner 等价的 helpers（特征若直接依赖 ctx.iterate_* 也能跑）
             try:
@@ -268,6 +321,19 @@ def parse_args():
     ap.add_argument("--start", default="2018-07-01", help="候选日期范围起点（自动选日期时生效）")
     ap.add_argument("--end", default=None, help="候选日期范围终点（自动选日期时生效）")
 
+    ap.add_argument(
+        "--date-source",
+        choices=["pv", "trade", "intersect"],
+        default="intersect",
+        help="测试日期来源：pv=仅 pv 目录；trade=仅 trade 目录；intersect=两者交集",
+    )
+    ap.add_argument(
+        "--trade-layout",
+        choices=["auto", "dir", "onefile"],
+        default="auto",
+        help="trade 数据布局：auto=自动探测；dir=YYYYMMDD/SYMBOL.parquet；onefile=YYYYMMDD.parquet",
+    )
+
     ap.add_argument("--only", nargs="*", help="只测试这些特征（文件名不带 .py）")
     ap.add_argument("--exclude", nargs="*", help="排除这些特征")
     ap.add_argument("--processes", type=int, default=4)
@@ -289,23 +355,24 @@ def main():
     trade_root = Path(args.trade_root)
     feat_dir = Path(args.features_dir)
 
+    if args.trade_layout == "auto":
+        layout = detect_trade_layout(trade_root)
+        if layout == "unknown":
+            raise SystemExit(
+                "trade_root 下既无 YYYYMMDD 目录也无 YYYYMMDD.parquet 文件，无法识别布局（可用 --trade-layout 指定）"
+            )
+    else:
+        layout = args.trade_layout
+
     start_date = dt.date.fromisoformat(args.start)
     end_date = dt.date.fromisoformat(args.end) if args.end else None
 
-    test_date = pick_test_date(pv_dir, trade_root, start_date, end_date, args.date)
+    test_date = pick_test_date(
+        pv_dir, trade_root, start_date, end_date, args.date, args.date_source, layout
+    )
     print(f"[*] 测试日期: {test_date.isoformat()} (仅单日)")
 
-    feat_files = []
-    include = set(args.only or [])
-    exclude = set(args.exclude or [])
-    for py in sorted(feat_dir.glob("*.py")):
-        if py.name.startswith("_"):
-            continue
-        if include and py.stem not in include:
-            continue
-        if py.stem in exclude:
-            continue
-        feat_files.append(py)
+    feat_files = discover_feature_files(feat_dir, args.only, args.exclude)
 
     if not feat_files:
         raise SystemExit("trades_features 目录下没有可运行的 .py 特征文件")
@@ -319,7 +386,7 @@ def main():
         tz=args.tz,
         atomic_write=False,
         parquet_compression="snappy",
-        # 不强制设置 trade_layout，_attach_trade_helpers 内部会做 auto 推断
+        trade_layout=layout,
     )
 
     tasks = [(str(py), base_ctx_dict, test_date.isoformat()) for py in feat_files]

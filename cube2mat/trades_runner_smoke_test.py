@@ -55,7 +55,7 @@ def load_feature_from_file(pyfile: Path) -> Optional[BaseFeature]:
 
 # ---------- trade 布局探测 & 日期扫描（兼容 dir 与 onefile） ----------
 def detect_trade_layout(trade_root: Path) -> str:
-    """返回 'onefile' | 'dir' | 'unknown'"""
+    """返回 'onefile' | 'dir' | 'unknown'。"""
     has_onefile = any(
         p.is_file() and p.suffix.lower() in (".parquet", ".parq") and len(p.stem) == 8 and p.stem.isdigit()
         for p in trade_root.iterdir()
@@ -74,8 +74,8 @@ def detect_trade_layout(trade_root: Path) -> str:
     return "unknown"
 
 
-def get_dates_from_trade(trade_root: Path, start: dt.date, end: dt.date, layout: str) -> list[dt.date]:
-    dates: set[dt.date] = set()
+def infer_latest_date_from_trade(trade_root: Path, layout: str) -> Optional[dt.date]:
+    latest: Optional[dt.date] = None
     if layout == "dir":
         for p in trade_root.iterdir():
             if p.is_dir() and len(p.name) == 8 and p.name.isdigit():
@@ -83,8 +83,8 @@ def get_dates_from_trade(trade_root: Path, start: dt.date, end: dt.date, layout:
                     d = dt.datetime.strptime(p.name, "%Y%m%d").date()
                 except ValueError:
                     continue
-                if start <= d <= end:
-                    dates.add(d)
+                if latest is None or d > latest:
+                    latest = d
     elif layout == "onefile":
         for p in trade_root.iterdir():
             if p.is_file() and p.suffix.lower() in (".parquet", ".parq") and len(p.stem) == 8 and p.stem.isdigit():
@@ -92,98 +92,135 @@ def get_dates_from_trade(trade_root: Path, start: dt.date, end: dt.date, layout:
                     d = dt.datetime.strptime(p.stem, "%Y%m%d").date()
                 except ValueError:
                     continue
-                if start <= d <= end:
-                    dates.add(d)
-    else:
-        # layout 异常时直接返回空列表，由调用方处理
-        pass
-    return sorted(dates)
+                if latest is None or d > latest:
+                    latest = d
+    return latest
 
 
-def discover_feature_files(
-    feat_dir: Path,
-    include: Optional[Iterable[str]] = None,
-    exclude: Optional[Iterable[str]] = None,
-) -> list[Path]:
-    include = set(include or [])
-    exclude = set(exclude or [])
-    files: list[Path] = []
-    for py in sorted(feat_dir.glob("*.py")):
-        if py.name.startswith("_"):
-            continue
-        if include and py.stem not in include:
-            continue
-        if py.stem in exclude:
-            continue
-        files.append(py)
-    return files
+def get_dates_from_trade(trade_root: Path, start_date: dt.date, end_date: dt.date, layout: str) -> list[dt.date]:
+    avail: set[dt.date] = set()
+    if layout == "dir":
+        for p in trade_root.iterdir():
+            if p.is_dir() and len(p.name) == 8 and p.name.isdigit():
+                try:
+                    d = dt.datetime.strptime(p.name, "%Y%m%d").date()
+                except ValueError:
+                    continue
+                if start_date <= d <= end_date:
+                    avail.add(d)
+    elif layout == "onefile":
+        for p in trade_root.iterdir():
+            if p.is_file() and p.suffix.lower() in (".parquet", ".parq") and len(p.stem) == 8 and p.stem.isdigit():
+                try:
+                    d = dt.datetime.strptime(p.stem, "%Y%m%d").date()
+                except ValueError:
+                    continue
+                if start_date <= d <= end_date:
+                    avail.add(d)
+    return sorted(avail)
 
 
 def pick_test_date(
     pv_dir: Path,
     trade_root: Path,
     start: dt.date,
-    end: Optional[dt.date],
-    explicit_date: Optional[str],
+    end: dt.date,
     date_source: str,
     layout: str,
+    explicit_date: Optional[str],
 ) -> dt.date:
     if explicit_date:
         return dt.date.fromisoformat(explicit_date)
 
-    scan_end = end or dt.date(2100, 1, 1)
-
     if date_source == "pv":
-        candidates = get_dates_from_pv(pv_dir, start, scan_end)
+        candidates = get_dates_from_pv(pv_dir, start, end)
     elif date_source == "trade":
-        candidates = get_dates_from_trade(trade_root, start, scan_end, layout)
-    else:  # intersect
-        pv_dates = set(get_dates_from_pv(pv_dir, start, scan_end))
-        trade_dates = set(get_dates_from_trade(trade_root, start, scan_end, layout))
-        candidates = sorted(pv_dates & trade_dates)
+        candidates = get_dates_from_trade(trade_root, start, end, layout)
+    else:
+        d1 = set(get_dates_from_pv(pv_dir, start, end))
+        d2 = set(get_dates_from_trade(trade_root, start, end, layout))
+        candidates = sorted(d1 & d2)
 
     if not candidates:
-        raise SystemExit("未发现任何有效测试日期（检查 pv_dir / trade_root）")
+        raise SystemExit("未发现任何有效测试日期（检查 pv_dir / trade_root 与日期范围设置）")
     return candidates[-1]
+
+
+def determine_end_date(
+    pv_dir: Path,
+    trade_root: Path,
+    date_source: str,
+    layout: str,
+    explicit_end: Optional[str],
+) -> dt.date:
+    if explicit_end is not None:
+        return dt.date.fromisoformat(explicit_end)
+
+    if date_source in ("pv", "intersect"):
+        all_pv_dates = get_dates_from_pv(pv_dir, dt.date(1900, 1, 1), dt.date(2100, 1, 1))
+        if not all_pv_dates:
+            raise SystemExit("pv 目录为空或文件名无法解析为日期，无法推断测试日期（可显式指定 --date 或 --end）")
+        return max(all_pv_dates)
+
+    latest = infer_latest_date_from_trade(trade_root, layout)
+    if latest is None:
+        raise SystemExit("trade_root 下未发现可用日期，无法推断测试日期（请确认路径或显式指定 --date/--end）")
+    return latest
 
 
 # ---------- 在 Context 上注入与 runner 等价的 trade helpers（与 quote 版思路相同） ----------
 def _attach_trade_helpers(ctx: FeatureContext):
     import importlib
-    trade_root = Path(getattr(ctx, "trade_root"))
-    layout = getattr(ctx, "trade_layout", "auto")
 
-    # 自动识别（仅用于 smoke；runner 中由 CLI 指定或探测）
-    if layout == "auto":
-        has_onefile = any(p.is_file() and p.suffix.lower() in (".parquet", ".parq") and len(p.stem) == 8 and p.stem.isdigit()
-                          for p in trade_root.iterdir())
-        layout = "onefile" if has_onefile else "dir"
+    layout = getattr(ctx, "trade_layout", "dir")
+    trade_root = Path(getattr(ctx, "trade_root"))
 
     if layout == "onefile":
         ds = importlib.import_module("pyarrow.dataset")
-        pq = importlib.import_module("pyarrow.parquet")
+        importlib.import_module("pyarrow.parquet")
 
         def get_day_parquet(date: dt.date) -> Path:
             return trade_root / f"{date.strftime('%Y%m%d')}.parquet"
 
-        def iterate_day_for_symbol(date: dt.date, symbol: str,
-                                   columns: list[str] | None = None, batch_size: int = 200_000):
+        def _batch_to_pandas(batch):
+            try:
+                return batch.to_pandas(copy=False)
+            except TypeError:
+                return batch.to_pandas()
+
+        def iterate_day_for_symbol(
+            date: dt.date,
+            symbol: str,
+            columns: list[str] | None = None,
+            batch_size: int = 200_000,
+        ):
             path = get_day_parquet(date)
             dataset = ds.dataset(str(path), format="parquet")
-            predicate = (ds.field("symbol") == symbol)
+            predicate = ds.field("symbol") == symbol
             for batch in dataset.to_batches(filter=predicate, columns=columns, batch_size=batch_size):
-                yield batch.to_pandas(copy=False)
+                yield _batch_to_pandas(batch)
 
-        def iterate_day_in_batches(date: dt.date,
-                                   columns: list[str] | None = None, batch_size: int = 200_000):
+        def iterate_day_in_batches(
+            date: dt.date,
+            columns: list[str] | None = None,
+            *,
+            symbols: Iterable[str] | None = None,
+            batch_size: int = 200_000,
+        ):
             path = get_day_parquet(date)
-            pfq = pq.ParquetFile(str(path))
-            for batch in pfq.iter_batches(batch_size=batch_size, columns=columns):
-                yield batch.to_pandas(copy=False)
+            dataset = ds.dataset(str(path), format="parquet")
+            predicate = None
+            if symbols:
+                symbol_list = [str(sym) for sym in symbols]
+                predicate = ds.field("symbol").isin(symbol_list)
+
+            for batch in dataset.to_batches(filter=predicate, columns=columns, batch_size=batch_size):
+                yield _batch_to_pandas(batch)
 
         setattr(ctx, "get_day_parquet", get_day_parquet)
         setattr(ctx, "iterate_day_for_symbol", iterate_day_for_symbol)
         setattr(ctx, "iterate_day_in_batches", iterate_day_in_batches)
+
     else:
         import pandas as pd
 
@@ -193,20 +230,32 @@ def _attach_trade_helpers(ctx: FeatureContext):
         def get_symbol_parquet(date: dt.date, symbol: str) -> Path:
             return get_day_dir(date) / f"{symbol}.parquet"
 
-        def iterate_day_for_symbol(date: dt.date, symbol: str,
-                                   columns: list[str] | None = None, batch_size: int = 200_000):
+        def iterate_day_for_symbol(
+            date: dt.date,
+            symbol: str,
+            columns: list[str] | None = None,
+            batch_size: int = 200_000,
+        ):
             path = get_symbol_parquet(date, symbol)
             if not path.exists():
                 return
             df = pd.read_parquet(path, columns=columns)
             yield df
 
-        def iterate_day_in_batches(date: dt.date,
-                                   columns: list[str] | None = None, batch_size: int = 200_000):
+        def iterate_day_in_batches(
+            date: dt.date,
+            columns: list[str] | None = None,
+            *,
+            symbols: Iterable[str] | None = None,
+            batch_size: int = 200_000,
+        ):
             day_dir = get_day_dir(date)
             if not day_dir.exists():
                 return
+            wanted = {str(sym) for sym in symbols} if symbols else None
             for f in sorted(day_dir.glob("*.parquet")):
+                if wanted is not None and f.stem not in wanted:
+                    continue
                 try:
                     df = pd.read_parquet(f, columns=columns)
                 except Exception:
@@ -220,12 +269,12 @@ def _attach_trade_helpers(ctx: FeatureContext):
 
 
 # ---------- 单特征单日冒烟测试（供多进程调用） ----------
-def smoke_one_feature(args: Tuple[str, Dict[str, Any], str]) -> Tuple[str, str, str, str]:
+def smoke_one_feature(args: Tuple[str, Dict[str, Any], Dict[str, Any], str]) -> Tuple[str, str, str, str]:
     """
     返回: (pyfile, feature_name(or stem), status, info)
     status: PASS / FAIL / LOAD_FAIL
     """
-    feat_file, base_ctx_dict, date_iso = args
+    feat_file, ctx_kwargs, extra_ctx_attrs, date_iso = args
     py_path = Path(feat_file)
 
     feature = load_feature_from_file(py_path)
@@ -259,14 +308,12 @@ def smoke_one_feature(args: Tuple[str, Dict[str, Any], str]) -> Tuple[str, str, 
     date = dt.date.fromisoformat(date_iso)
     try:
         with tempfile.TemporaryDirectory(prefix=f"trade_feat_smoke_{py_path.stem}_") as tmpdir:
-            ctx_dict = dict(base_ctx_dict)
+            ctx_dict = dict(ctx_kwargs)
             ctx_dict["out_root"] = Path(tmpdir)
-            trade_root_val = ctx_dict.pop("trade_root", None)
-            trade_layout_val = ctx_dict.pop("trade_layout", "auto")
             ctx = FeatureContext(**ctx_dict)
-            if trade_root_val is not None:
-                setattr(ctx, "trade_root", trade_root_val)
-            setattr(ctx, "trade_layout", trade_layout_val)
+
+            for k, v in (extra_ctx_attrs or {}).items():
+                setattr(ctx, k, v)
 
             # 为最大兼容性，注入与 runner 等价的 helpers（特征若直接依赖 ctx.iterate_* 也能跑）
             try:
@@ -313,26 +360,17 @@ def parse_args():
     )
     ap.add_argument("--pv-dir", default=str(dataraw_root / "us" / "basedata" / "close"))
     ap.add_argument("--full-dir", default=str(dataraw_root / "us" / "cubefull"))
-    ap.add_argument("--trade-root", default=str(dataraw_root / "us" / "trade_onefile"))
+    ap.add_argument("--trade-root", default=str(dataraw_root / "us" / "trades_onefile"))
     ap.add_argument("--features-dir", default=str(base_dir / "trades_features"))
+    ap.add_argument("--trade-layout", choices=["auto", "dir", "onefile"], default="auto",
+                    help="trade 数据布局：auto=自动探测；dir=YYYYMMDD/SYMBOL.parquet；onefile=YYYYMMDD.parquet")
 
     ap.add_argument("--tz", default="America/New_York")
     ap.add_argument("--date", default=None, help="测试日期 YYYY-MM-DD；缺省时自动选择最新可跑日期")
     ap.add_argument("--start", default="2018-07-01", help="候选日期范围起点（自动选日期时生效）")
     ap.add_argument("--end", default=None, help="候选日期范围终点（自动选日期时生效）")
-
-    ap.add_argument(
-        "--date-source",
-        choices=["pv", "trade", "intersect"],
-        default="intersect",
-        help="测试日期来源：pv=仅 pv 目录；trade=仅 trade 目录；intersect=两者交集",
-    )
-    ap.add_argument(
-        "--trade-layout",
-        choices=["auto", "dir", "onefile"],
-        default="auto",
-        help="trade 数据布局：auto=自动探测；dir=YYYYMMDD/SYMBOL.parquet；onefile=YYYYMMDD.parquet",
-    )
+    ap.add_argument("--date-source", choices=["pv", "trade", "intersect"], default="pv",
+                    help="测试日期来源：pv=仅 pv；trade=仅 trade；intersect=两者交集")
 
     ap.add_argument("--only", nargs="*", help="只测试这些特征（文件名不带 .py）")
     ap.add_argument("--exclude", nargs="*", help="排除这些特征")
@@ -358,38 +396,49 @@ def main():
     if args.trade_layout == "auto":
         layout = detect_trade_layout(trade_root)
         if layout == "unknown":
-            raise SystemExit(
-                "trade_root 下既无 YYYYMMDD 目录也无 YYYYMMDD.parquet 文件，无法识别布局（可用 --trade-layout 指定）"
-            )
+            raise SystemExit("trade_root 下既无 YYYYMMDD 目录也无 YYYYMMDD.parquet 文件，无法识别布局（可用 --trade-layout 指定）")
     else:
         layout = args.trade_layout
 
     start_date = dt.date.fromisoformat(args.start)
-    end_date = dt.date.fromisoformat(args.end) if args.end else None
+    end_date = determine_end_date(pv_dir, trade_root, args.date_source, layout, args.end)
 
-    test_date = pick_test_date(
-        pv_dir, trade_root, start_date, end_date, args.date, args.date_source, layout
-    )
-    print(f"[*] 测试日期: {test_date.isoformat()} (仅单日)")
+    if start_date > end_date:
+        raise SystemExit("开始日期晚于结束日期，请检查 --start/--end 设置")
 
-    feat_files = discover_feature_files(feat_dir, args.only, args.exclude)
+    test_date = pick_test_date(pv_dir, trade_root, start_date, end_date, args.date_source, layout, args.date)
+    print(f"[*] 测试日期: {test_date.isoformat()} (仅单日 | date_source={args.date_source} | trade_layout={layout})")
+
+    feat_files = []
+    include = set(args.only or [])
+    exclude = set(args.exclude or [])
+    for py in sorted(feat_dir.glob("*.py")):
+        if py.name.startswith("_"):
+            continue
+        if include and py.stem not in include:
+            continue
+        if py.stem in exclude:
+            continue
+        feat_files.append(py)
 
     if not feat_files:
         raise SystemExit("trades_features 目录下没有可运行的 .py 特征文件")
 
     print(f"[*] 待测特征数量: {len(feat_files)}")
-    base_ctx_dict = dict(
+    base_ctx_kwargs = dict(
         pv_dir=pv_dir,
         full_dir=full_dir,
-        trade_root=str(trade_root),
         out_root=Path(tempfile.gettempdir()) / "trade_feat_smoke_dummy",  # 将被子进程覆盖
         tz=args.tz,
         atomic_write=False,
         parquet_compression="snappy",
-        trade_layout=layout,
     )
+    extra_ctx_attrs = {
+        "trade_root": str(trade_root),
+        "trade_layout": layout,
+    }
 
-    tasks = [(str(py), base_ctx_dict, test_date.isoformat()) for py in feat_files]
+    tasks = [(str(py), base_ctx_kwargs, extra_ctx_attrs, test_date.isoformat()) for py in feat_files]
 
     results = []
     ok = fail = load_fail = 0

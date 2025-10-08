@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime as dt
+import inspect
 from typing import Dict
 
 import pandas as pd
@@ -40,6 +41,8 @@ class TradeRthDollarVolume(TradesBaseFeature):
         tz = getattr(ctx, "tz", "America/New_York")
         metric: Dict[str, float] = {}
 
+        use_inclusive = "inclusive" in inspect.signature(pd.DataFrame.between_time).parameters
+
         for df in self.iterate_trade_batches(
             ctx,
             date,
@@ -58,7 +61,10 @@ class TradeRthDollarVolume(TradesBaseFeature):
                 continue
 
             df = self.ensure_participant_index(df, tz)
-            df = df.between_time(self.RTH_START, self.RTH_END, include_end=False)
+            if use_inclusive:
+                df = df.between_time(self.RTH_START, self.RTH_END, inclusive="left")
+            else:
+                df = df.between_time(self.RTH_START, self.RTH_END, include_end=False)
             if df.empty:
                 continue
 

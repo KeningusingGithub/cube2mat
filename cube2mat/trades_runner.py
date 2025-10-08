@@ -172,20 +172,37 @@ def _attach_trade_helpers(ctx: FeatureContext):
         def get_day_parquet(date: dt.date) -> Path:
             return trade_root / f"{date.strftime('%Y%m%d')}.parquet"
 
+        def _batch_to_pandas(batch):
+            try:
+                return batch.to_pandas(copy=False)
+            except TypeError:
+                # Older versions of pyarrow do not support the ``copy`` argument.
+                return batch.to_pandas()
+
         def iterate_day_for_symbol(date: dt.date, symbol: str,
                                    columns: list[str] | None = None, batch_size: int = 200_000):
             path = get_day_parquet(date)
             dataset = ds.dataset(str(path), format="parquet")
             predicate = (ds.field("symbol") == symbol)
             for batch in dataset.to_batches(filter=predicate, columns=columns, batch_size=batch_size):
-                yield batch.to_pandas(copy=False)
+                yield _batch_to_pandas(batch)
 
-        def iterate_day_in_batches(date: dt.date,
-                                   columns: list[str] | None = None, batch_size: int = 200_000):
+        def iterate_day_in_batches(
+            date: dt.date,
+            columns: list[str] | None = None,
+            *,
+            symbols: Iterable[str] | None = None,
+            batch_size: int = 200_000,
+        ):
             path = get_day_parquet(date)
-            pfq = pq.ParquetFile(str(path))
-            for batch in pfq.iter_batches(batch_size=batch_size, columns=columns):
-                yield batch.to_pandas(copy=False)
+            dataset = ds.dataset(str(path), format="parquet")
+            predicate = None
+            if symbols:
+                symbol_list = [str(sym) for sym in symbols]
+                predicate = ds.field("symbol").isin(symbol_list)
+
+            for batch in dataset.to_batches(filter=predicate, columns=columns, batch_size=batch_size):
+                yield _batch_to_pandas(batch)
 
         setattr(ctx, "get_day_parquet", get_day_parquet)
         setattr(ctx, "iterate_day_for_symbol", iterate_day_for_symbol)
@@ -208,12 +225,20 @@ def _attach_trade_helpers(ctx: FeatureContext):
             df = pd.read_parquet(path, columns=columns)
             yield df
 
-        def iterate_day_in_batches(date: dt.date,
-                                   columns: list[str] | None = None, batch_size: int = 200_000):
+        def iterate_day_in_batches(
+            date: dt.date,
+            columns: list[str] | None = None,
+            *,
+            symbols: Iterable[str] | None = None,
+            batch_size: int = 200_000,
+        ):
             day_dir = get_day_dir(date)
             if not day_dir.exists():
                 return
+            wanted = {str(sym) for sym in symbols} if symbols else None
             for f in sorted(day_dir.glob("*.parquet")):
+                if wanted is not None and f.stem not in wanted:
+                    continue
                 try:
                     df = pd.read_parquet(f, columns=columns)
                 except Exception:
@@ -267,7 +292,7 @@ def parse_args():
     ap.add_argument("--pv-dir", default=str(dataraw_root / "us" / "basedata" / "close"), help="用于样本与日期扫描（若 --date-source=pv 或 intersect）")
     ap.add_argument("--full-dir", default=str(dataraw_root / "us" / "cubefull"), help="与 FeatureContext 兼容所需（即使 trade 特征可能用不上）")
 
-    ap.add_argument("--trade-root", default=str(dataraw_root / "us" / "trade_onefile"),
+    ap.add_argument("--trade-root", default=str(dataraw_root / "us" / "trades_onefile"),
                     help="trade 数据根目录：onefile 模式下放 YYYYMMDD.parquet；目录式为 YYYYMMDD/SYMBOL.parquet")
     ap.add_argument("--out-root", default=str(dataraw_root / "us" / "trade_features"), help="特征输出根目录")
     ap.add_argument("--tz", default="America/New_York")

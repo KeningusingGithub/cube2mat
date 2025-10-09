@@ -1,0 +1,78 @@
+Cube2mat features features starting with 'E':
+================================================================================
+Feature name: early_late_vol_ratio_30m
+Defined in: early_late_vol_ratio_30m.py (EarlyLateVolRatio30mFeature)
+Docstring:
+前 30 分钟 vs 后 30 分钟的收益波动比：
+  ratio = std(ret in t<30) / std(ret in t>=total_min-30)，ret=close.pct_change()。
+两端样本的有效收益数均需≥3，否则 NaN。
+Description attribute: Std(ret) first 30m vs last 30m ratio.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: early_late_vol_ratio_60m
+Defined in: early_late_vol_ratio_60m.py (EarlyLateVolRatio60mFeature)
+Docstring:
+前 60 分钟 vs 尾盘 60 分钟的收益波动比：
+  ratio = std(ret in 09:30–10:29) / std(ret in 15:00–15:59)。
+任一段有效收益数 <2 或分母=0 → NaN。
+Description attribute: Std(ret)_first60 / Std(ret)_last60 in RTH.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: early_vs_late_run_count_ratio
+Defined in: early_vs_late_run_count_ratio.py (EarlyVsLateRunCountRatioFeature)
+Docstring: (not provided)
+Description attribute: Run count in 09:30–10:29 divided by run count in 15:00–15:59 (sign runs of log-returns; zeros break runs).
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: ema20_trend_align_share
+Defined in: ema20_trend_align_share.py (EMA20TrendAlignShare)
+Docstring: (not provided)
+Description attribute: Share of RTH bars where sign(Δclose) == sign(ΔEMA20(close)); zeros ignored.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: end_position_in_range
+Defined in: end_position_in_range.py (EndPositionInRange)
+Docstring: (not provided)
+Description attribute: Position of close in the session range: (C - L) / (H - L) ∈ [0,1].
+Required inputs:
+  - required_full_columns: symbol, time, high, low, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: endgame_drift_share_last60
+Defined in: endgame_drift_share_last60.py (EndgameDriftShareLast60)
+Docstring: (not provided)
+Description attribute: Sum of log returns in 15:00–15:59 divided by total O→C log return (RTH only).
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: entropy_sign_ret
+Defined in: entropy_sign_ret.py (EntropySignRetFeature)
+Docstring:
+Normalized Shannon entropy of simple-return signs in RTH:
+states = {-1, 0, +1}; H = -sum p_i log p_i / log(k), where k is number of states with
+non-zero probability. Returns NaN if fewer than one return or only one state present.
+Description attribute: Normalized entropy (0..1) of simple-return sign distribution.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: ewma_rvol_logret_094
+Defined in: ewma_rvol_logret_094.py (EWMARVolLogret094Feature)
+Docstring:
+EWMA realized volatility (lambda=0.94) of intraday log returns within RTH.
+Weights normalized to sum to 1:
+  w_i = (1 - λ) / (1 - λ^n) * λ^{n-1-i}; sigma = sqrt(sum w_i r_i^2).
+Description attribute: RiskMetrics-style EWMA RV (lambda=0.94) on log returns (RTH).
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------

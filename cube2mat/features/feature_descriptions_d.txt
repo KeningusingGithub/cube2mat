@@ -1,0 +1,79 @@
+Cube2mat features features starting with 'D':
+================================================================================
+Feature name: dc_count_bps_10
+Defined in: dc_count_bps_10.py (DCCountBps10Feature)
+Docstring:
+Directional-change count with threshold theta=10bp (0.001) on close.
+Event when price reverses by >=theta from the last swing extreme. NaN if <2 closes.
+Description attribute: Directional-change event count at 10bp threshold.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: diff_close_vwap_on_n_beta
+Defined in: diff_close_vwap_on_n_beta.py (DiffCloseVwapOnNBetaFeature)
+Docstring:
+09:30–15:59 内，OLS: (close - vwap) ~ n，输出斜率。
+捕捉价差溢价与成交笔数的关系。样本<2 或 var(n)=0 则 NaN。
+Description attribute: OLS slope of (close - vwap) on n within 09:30–15:59.
+Required inputs:
+  - required_full_columns: symbol, time, close, vwap, n
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: diff_close_vwap_on_volume_beta
+Defined in: diff_close_vwap_on_volume_beta.py (DiffCloseVwapOnVolumeBetaFeature)
+Docstring:
+09:30–15:59 内，OLS: (close - vwap) ~ volume，输出斜率。
+捕捉价差溢价对成交量的日内敏感度。样本<2 或 var(volume)=0 则 NaN。
+Description attribute: OLS slope of (close - vwap) on volume within 09:30–15:59.
+Required inputs:
+  - required_full_columns: symbol, time, close, vwap, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: diff_close_vwap_trend_slope
+Defined in: diff_close_vwap_trend_slope.py (DiffCloseVwapTrendSlopeFeature)
+Docstring:
+09:30–15:59 内，回归 (close - vwap) ~ time(分钟)，输出斜率。
+捕捉 close 对 VWAP 的“溢价/贴水”日内漂移。若样本<2 或 var(time)=0，则 NaN。
+Description attribute: OLS slope of (close - vwap) on minutes-since-09:30 within 09:30–15:59.
+Required inputs:
+  - required_full_columns: symbol, time, close, vwap
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: doji_density
+Defined in: doji_density.py (DojiDensityFeature)
+Docstring:
+Share of bars with |close-open| <= theta*(high-low), theta=0.1; exclude zero-range bars.
+Description attribute: Doji density in RTH with theta=0.1 threshold; exclude zero-range bars.
+Required inputs:
+  - required_full_columns: symbol, time, open, high, low, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: down_bar_share
+Defined in: down_bar_share.py (DownBarShareFeature)
+Docstring:
+09:30–15:59 内，下跌 bar 占比：count(ret<0) / count(valid ret)
+Description attribute: Share of bars with negative simple return within the session.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: down_mean_absret
+Defined in: down_mean_absret.py (DownMeanAbsRetFeature)
+Docstring:
+下跌状态（ret<0）下 |ret| 的均值。有效下跌样本<1 则 NaN。
+Description attribute: Mean absolute simple return conditional on ret<0.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: duration_since_last_vwap_cross_frac
+Defined in: duration_since_last_vwap_cross_frac.py (DurationSinceLastVWAPCrossFracFeature)
+Docstring:
+Fraction of session elapsed since the last strict cross of (close-vwap) sign.
+If no cross in RTH, returns NaN.
+Description attribute: Session fraction since last VWAP crossing (stickiness).
+Required inputs:
+  - required_full_columns: symbol, time, close, vwap
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------

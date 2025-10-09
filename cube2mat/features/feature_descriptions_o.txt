@@ -1,0 +1,62 @@
+Cube2mat features features starting with 'O':
+================================================================================
+Feature name: oc_efficiency_over_range
+Defined in: oc_efficiency_over_range.py (OCEfficiencyOverRangeFeature)
+Docstring:
+Directional efficiency of session:
+  eff = |last_close - first_open| / (H - L), H=max(high), L=min(low) in RTH.
+NaN if (H-L)<=0 or anchors missing.
+Description attribute: Absolute OC move normalized by session range (H-L).
+Required inputs:
+  - required_full_columns: symbol, time, open, high, low, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: oc_return_last30m_share
+Defined in: oc_return_last30m_share.py (OCReturnLast30mShareFeature)
+Docstring:
+Share of net RTH log return contributed by last 30 minutes (15:30–15:59):
+  share = sum r_tail / sum r_all. NaN if denominator==0 or insufficient.
+Description attribute: Net-return share from last 30 minutes of RTH.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: open_15m_absret_share
+Defined in: open_15m_absret_share.py (Open15mAbsRetShareFeature)
+Docstring:
+09:30–15:59 内，开盘 15 分钟的绝对收益贡献占比：
+  share = sum(|ret| in t<15) / sum(|ret| all), ret=close.pct_change()。
+若全日有效 ret 为空或分母为 0，则 NaN。
+Description attribute: Share of absolute returns in first 15 minutes; ret by close.pct_change.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: open_15m_volume_share
+Defined in: open_15m_volume_share.py (Open15mVolumeShareFeature)
+Docstring:
+09:30–15:59 内，开盘前 15 分钟 (t_min<15) 的成交量占比：sum(volume_open_15) / sum(volume_all)。
+若全日有效 volume 总和<=0，则 NaN。
+Description attribute: Share of volume in first 15 minutes; sum(vol in t<15) / sum(vol all).
+Required inputs:
+  - required_full_columns: symbol, time, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: open_to_close_ret
+Defined in: open_to_close_ret.py (OpenToCloseRetFeature)
+Docstring:
+Session open-to-close simple return in RTH:
+  value = last_close / first_open - 1; NaN if missing or nonpositive anchors.
+Description attribute: Simple return from first open to last close within RTH.
+Required inputs:
+  - required_full_columns: symbol, time, open, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: opening_impulse_share_30m
+Defined in: opening_impulse_share_30m.py (OpeningImpulseShare30m)
+Docstring: (not provided)
+Description attribute: Sum of log returns in 09:30–09:59 divided by total O→C log return (RTH only).
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------

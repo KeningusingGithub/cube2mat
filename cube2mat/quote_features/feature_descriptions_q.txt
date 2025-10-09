@@ -1,0 +1,416 @@
+Cube2mat quote features features starting with 'Q':
+================================================================================
+Feature name: quote_bbo_dominance_hhi_tw_all
+Defined in: bbo_dominance_hhi_tw.py (QuoteBBODominanceHHITWOnefileFeature)
+Docstring:
+Onefile 专用（每天一个 {YYYYMMDD}.parquet）。
+读取 ['symbol','ask_exchange','bid_exchange','participant_timestamp']，单次流式扫描，
+计算 RTH(09:30–16:00 ET) 的“最佳报价主导度 HHI”（时间加权）：
+  - 在 [t_{i-1}, t_i) 内，上一事件的 ask_exchange 与 bid_exchange 各持有该 Δt；
+  - 对每个 symbol，把所有场所的持有时长（双侧合并）归一化成份额 s_e，输出 HHI = ∑ s_e^2。
+输出：['symbol','value']，数值∈[0,1]；若无有效时长则 NA。
+Description attribute: RTH time-weighted HHI of best-of-book venue occupancy (both sides combined)
+Required inputs:
+  - required_pv_columns: symbol
+  - required_quote_columns: ask_exchange, bid_exchange, participant_timestamp, symbol
+--------------------------------------------------------------------------------
+Feature name: quote_cost_bps_all
+Defined in: cost_bps.py (QuoteCostBpsOnefileFeature)
+Docstring:
+Onefile 专用（每天一个 {YYYYMMDD}.parquet）。
+读取 ['symbol','ask_price','bid_price','participant_timestamp']，单次流式扫描整天，
+计算 RTH 内的成交成本 bps 代理： cost_bps = (ask / bid - 1) * 1e4。
+交叉/锁定场景下做下限截断为 0。
+输出：['symbol','value'] 按 PV 样本顺序对齐。
+Description attribute: RTH mean of (ask/bid - 1) * 1e4 per symbol (onefile, single pass)
+Required inputs:
+  - required_pv_columns: symbol
+  - required_quote_columns: ask_price, bid_price, participant_timestamp, symbol
+--------------------------------------------------------------------------------
+Feature name: quote_imbalance_spread_coupling_all
+Defined in: imbalance_spread_coupling.py (QuoteImbSpreadCouplingOnefileFeature)
+Docstring:
+Onefile 专用（每天一个 {YYYYMMDD}.parquet），两次流式扫描：
+Pass1：用每 symbol 的直方图近似估计 p90(rel_spread)，
+Pass2：计算事件均值 coupling = imb * (1 - rel / p90)，其中 rel = 2*(ask-bid)/(ask+bid) 截断为[0, +∞)。
+仅统计 RTH(09:30–16:00 ET) 内有效记录；对 size_sum>0、denom>0 的样本生效。
+输出：['symbol','value'] 与 PV 顺序对齐。
+Description attribute: RTH mean of SizeImbalance × (1 - rel_spread / p90(rel_spread)) per symbol (onefile, two-pass)
+Required inputs:
+  - required_pv_columns: symbol
+  - required_quote_columns: ask_price, bid_price, ask_size, bid_size, participant_timestamp, symbol
+--------------------------------------------------------------------------------
+Feature name: quote_locked_crossed_share_tw_all
+Defined in: locked_crossed_share_tw.py (QuoteLockedCrossedShareTWOnefileFeature)
+Docstring:
+在 RTH(09:30–16:00 ET) 内，时间加权计算 “被锁/交叉”(ask<=bid) 的占比：
+  share = time{ ask<=bid } / time{ 观测到的 RTH 时长 }
+以上一事件的状态在 [t_{i-1}, t_i) 持有；尾段补到 16:00。
+输出：['symbol','value']，∈[0,1]。
+Description attribute: RTH time share where the book is locked/crossed (ask<=bid), piecewise-constant (onefile)
+Required inputs:
+  - required_pv_columns: symbol
+  - required_quote_columns: ask_price, bid_price, participant_timestamp, symbol
+--------------------------------------------------------------------------------
+Feature name: quote_lq_adjusted_spread_all
+Defined in: lq_adjusted_spread.py (QuoteLQAdjustedSpreadOnefileFeature)
+Docstring:
+Onefile 专用（每天一个 {YYYYMMDD}.parquet）。
+读取 ['symbol','ask_price','bid_price','ask_size','bid_size','participant_timestamp']，单次流式扫描整天，
+计算 RTH 内的“流动性调整后的相对价差”事件简单均值：
+    rel = 2*(ask - bid)/(ask + bid)   （交叉/锁定截断为 0）
+    adj = rel / log(1 + ask_size + bid_size)
+仅统计 size_sum>0。
+输出：['symbol','value'] 按 PV 样本顺序对齐。
+Description attribute: RTH mean of (2*(ask-bid)/(ask+bid)) / log(1+size_sum) per symbol (onefile, single pass)
+Required inputs:
+  - required_pv_columns: symbol
+  - required_quote_columns: ask_price, bid_price, ask_size, bid_size, participant_timestamp, symbol
+--------------------------------------------------------------------------------
+Feature name: quote_micro_dir_consistency_tw_all
+Defined in: micro_dir_consistency_tw.py (QuoteMicroDirConsistencyTWOnefileFeature)
+Docstring:
+Onefile 专用（每天一个 {YYYYMMDD}.parquet）。
+读取 ['symbol','ask_price','bid_price','ask_size','bid_size','participant_timestamp']，单次流式扫描，
+计算 RTH(09:30–16:00 ET) 的“微价 > 中价”的时间占比（时间加权一致性）：
+    micro = (ask*bid_size + bid*ask_size) / (ask_size + bid_size)
+    mid   = (ask + bid)/2
+    I     = 1 if micro > mid else 0
+采用 piecewise-constant：以上一事件的 I 持有到下一事件；最后补到 16:00。
+输出：['symbol','value'] 与 PV 顺序对齐；数值 ∈ [0,1]。
+Description attribute: RTH time-share of (microprice > mid) per symbol (onefile, single pass)
+Required inputs:
+  - required_pv_columns: symbol
+  - required_quote_columns: ask_price, bid_price, ask_size, bid_size, participant_timestamp, symbol
+--------------------------------------------------------------------------------
+Feature name: quote_micro_premium_tw_all
+Defined in: microprice_premium_tw.py (QuoteMicroPremiumTWOnefileFeature)
+Docstring:
+Onefile 专用（每天一个 {YYYYMMDD}.parquet）。
+读取 ['symbol','ask_price','bid_price','ask_size','bid_size','participant_timestamp']，单次流式扫描整天，
+计算 RTH(09:30–16:00 ET) 的“时间加权微价溢价” ((micro - mid) / mid)。
+采用 piecewise-constant：以上一次事件的值持有到下一事件；最后补到 16:00。
+输出：['symbol','value'] 按 PV 样本顺序对齐。
+Description attribute: RTH time-weighted mean of microprice premium per symbol (onefile, single pass)
+Required inputs:
+  - required_pv_columns: symbol
+  - required_quote_columns: ask_price, bid_price, ask_size, bid_size, participant_timestamp, symbol
+--------------------------------------------------------------------------------
+Feature name: quote_mid_change_intensity_all
+Defined in: mid_change_intensity.py (QuoteMidChangeIntensityOnefileFeature)
+Docstring:
+Onefile 专用（每天一个 {YYYYMMDD}.parquet）。
+读取 ['symbol','ask_price','bid_price','participant_timestamp']，单次流式扫描，
+计算 RTH(09:30–16:00 ET) 的“中价变动强度”：中价变更次数 / 有效观测时长（分钟）。
+有效观测时长按区间 [t_{i-1}, t_i) 与 RTH 的交叠累计，尾段补到 16:00。
+仅在交叠时长 > 0 的相邻事件上计一次“变更”，且要求 mid_{i-1} 与 mid_i 有限、正。
+输出：['symbol','value']，单位：次/分钟。
+Description attribute: RTH rate of mid-price changes (changes per minute) per symbol (onefile, single pass)
+Required inputs:
+  - required_pv_columns: symbol
+  - required_quote_columns: ask_price, bid_price, participant_timestamp, symbol
+--------------------------------------------------------------------------------
+Feature name: quote_mid_jitter_abs_event_all
+Defined in: mid_jitter_abs_event.py (QuoteMidJitterAbsEventOnefileFeature)
+Docstring:
+Onefile 专用（每天一个 {YYYYMMDD}.parquet）。
+读取 ['symbol','ask_price','bid_price','participant_timestamp']，单次流式扫描，
+计算 RTH 内事件级中价对数收益的绝对值均值（“抖动”）：
+    r_i = log(mid_i / mid_{i-1}),  jitter = E[|r_i|]（事件均值）。
+仅统计与 RTH 有正交叠时长的相邻事件；mid>0 且有限。
+输出：['symbol','value']。
+Description attribute: RTH event-mean of |log(mid_t / mid_{t-1})| per symbol (onefile, single pass)
+Required inputs:
+  - required_pv_columns: symbol
+  - required_quote_columns: ask_price, bid_price, participant_timestamp, symbol
+--------------------------------------------------------------------------------
+Feature name: quote_mid_jump_ratio_all
+Defined in: mid_jump_ratio.py (QuoteMidJumpRatioOnefileFeature)
+Docstring:
+Onefile 专用（每天一个 {YYYYMMDD}.parquet）。
+读取 ['symbol','ask_price','bid_price','participant_timestamp']，单次流式扫描，
+计算 RTH 内“跳跃比例”（事件占比）：
+    jump_i = 1{ |mid_i - mid_{i-1}| / mid_{i-1} > τ }。
+仅统计与 RTH 有正交叠时长的相邻事件；mid>0 且有限。
+τ 默认 5bp (=0.0005)，可通过 ctx.jump_tau 覆盖。
+输出：['symbol','value']，单位：占比 ∈ [0,1]。
+Description attribute: RTH event share of |Δmid|/mid_prev > tau per symbol (onefile, single pass)
+Required inputs:
+  - required_pv_columns: symbol
+  - required_quote_columns: ask_price, bid_price, participant_timestamp, symbol
+--------------------------------------------------------------------------------
+Feature name: quote_mid_persistence_median_all
+Defined in: mid_persistence_median.py (QuoteMidPersistenceMedianOnefileFeature)
+Docstring:
+Onefile 专用（每天一个 {YYYYMMDD}.parquet）。
+读取 ['symbol','ask_price','bid_price','participant_timestamp']，单次流式扫描，
+估计 RTH 内“中价保持不变的稳定期时长”的中位数（单位：秒），使用每 symbol 的固定宽直方图近似：
+  - 在区间 [t_{i-1}, t_i) 内，中价视为持有 mid_{i-1}；
+  - 若在事件 i 时发生 mid 变更，则前一段稳定期结束，其累计时长计入直方图；
+  - 尾段 [t_last, 16:00) 也计入最后一个稳定期；
+直方图上界默认 3600s（1小时），超出部分截断到上限；可通过 ctx.persist_max_sec 覆盖。
+输出：['symbol','value']，为各自直方图估计的 p50（中位数）。
+Description attribute: RTH median duration (sec) of constant mid-price, per symbol (histogram approximation, onefile)
+Required inputs:
+  - required_pv_columns: symbol
+  - required_quote_columns: ask_price, bid_price, participant_timestamp, symbol
+--------------------------------------------------------------------------------
+Feature name: quote_nbbo_ineligible_share_all
+Defined in: nbbo_ineligible_share.py (QuoteNBBOIneligibleShareOnefileFeature)
+Docstring:
+在 RTH(09:30–16:00 ET) 内按事件统计 “NBBO 不合格” 占比：
+  share = #( has_nbbo_ineligible ) / #( all RTH events )
+代码集合从 ctx 注入（均为 set[int]；默认为空集合）：
+  - nbbo_ineligible_condition_codes
+  - nbbo_ineligible_indicator_codes
+输出：['symbol','value']，事件占比 ∈ [0,1]。
+Description attribute: RTH event share of NBBO-ineligible quotes based on conditions/indicators (onefile)
+Required inputs:
+  - required_pv_columns: symbol
+  - required_quote_columns: conditions, indicators, participant_timestamp, symbol
+--------------------------------------------------------------------------------
+Feature name: quote_nonfirm_manual_share_all
+Defined in: nonfirm_manual_share.py (QuoteNonFirmManualShareOnefileFeature)
+Docstring:
+在 RTH(09:30–16:00 ET) 内，按事件统计 “非有效 / 手工” 报价占比：
+  share = #( has_nonfirm_or_manual ) / #( all RTH events )
+其中 has_nonfirm_or_manual 由 conditions/indicators 是否包含指定代码决定。
+代码集合从 ctx 注入（均为 set[int]；默认为空集合）：
+  - nonfirm_condition_codes / nonfirm_indicator_codes
+  - manual_condition_codes  / manual_indicator_codes
+输出：['symbol','value']，事件占比 ∈ [0,1]。
+Description attribute: RTH event share of non-firm or manual quotes based on conditions/indicators (onefile)
+Required inputs:
+  - required_pv_columns: symbol
+  - required_quote_columns: conditions, indicators, participant_timestamp, symbol
+--------------------------------------------------------------------------------
+Feature name: quote_opening_flag_share_tw_all
+Defined in: opening_flag_share_tw.py (QuoteOpeningFlagShareTWOnefileFeature)
+Docstring:
+在 RTH(09:30–16:00 ET) 内，时间加权统计 “开盘相关标志” 占比（上一事件在 [t_{i-1}, t_i) 持有）：
+  share = time{ prev has opening-flag } / time{ 观测到的 RTH 时长 }
+标志由 conditions/indicators 是否包含 ctx 指定的代码集合决定：
+  - opening_condition_codes: set[int]
+  - opening_indicator_codes: set[int]
+若未提供集合则结果为 0（只计时长、分子始终 0）。
+Description attribute: RTH time share where opening-related flags are set (conditions/indicators), piecewise-constant
+Required inputs:
+  - required_pv_columns: symbol
+  - required_quote_columns: conditions, indicators, participant_timestamp, symbol
+--------------------------------------------------------------------------------
+Feature name: quote_price_change_share_all
+Defined in: price_change_share.py (QuotePriceChangeShareOnefileFeature)
+Docstring:
+Onefile 专用（每天一个 {YYYYMMDD}.parquet）。
+读取 ['symbol','bid_price','ask_price','participant_timestamp']，单次流式扫描，
+计算 RTH(09:30–16:00 ET) 的“价格变更占比”（事件占比）：
+    share = # { Δbid_price ≠ 0 or Δask_price ≠ 0 } / # { 有正交叠时长的相邻事件 }
+仅统计与 RTH 有正交叠时长的相邻事件；价需有限。
+输出：['symbol','value']，∈ [0,1]。
+Description attribute: RTH event share of price-changing updates per symbol (onefile, single pass)
+Required inputs:
+  - required_pv_columns: symbol
+  - required_quote_columns: bid_price, ask_price, participant_timestamp, symbol
+--------------------------------------------------------------------------------
+Feature name: quote_queue_depletion_rate_all
+Defined in: queue_depletion_rate.py (QuoteQueueDepletionRateOnefileFeature)
+Docstring:
+Onefile 专用（每天一个 {YYYYMMDD}.parquet）。
+读取 ['symbol','bid_price','ask_price','bid_size','ask_size','participant_timestamp']，单次流式扫描，
+计算 RTH 内“最佳价不变时”的队列消耗速率（单位：手/秒）：
+    对相邻事件 i-1 -> i，若 bid_price 不变：
+        计入 bid 侧的时长 dt = overlap([t_{i-1}, t_i), RTH)
+        计入消耗量 vol = max(0, bid_size_{i-1} - bid_size_i)
+    ask 侧同理。
+聚合：rate_side = (∑vol_side) / (∑dt_side)；输出 value = 平均(rate_bid, rate_ask)（仅对有时长的侧取平均）。
+为避免 DT=0 或缺失值引发问题，严格筛选有效样本；尾段默认无额外消耗，但将最后状态的时长补到 16:00（只计时长）。
+Description attribute: RTH queue depletion rate when best price unchanged (lots per second) per symbol (onefile, single pass)
+Required inputs:
+  - required_pv_columns: symbol
+  - required_quote_columns: bid_price, ask_price, bid_size, ask_size, participant_timestamp, symbol
+--------------------------------------------------------------------------------
+Feature name: quote_same_venue_share_tw_all
+Defined in: same_venue_share_tw.py (QuoteSameVenueShareTWOnefileFeature)
+Docstring:
+Onefile 专用（每天一个 {YYYYMMDD}.parquet）。
+读取 ['symbol','ask_exchange','bid_exchange','participant_timestamp']，单次流式扫描，
+计算 RTH(09:30–16:00 ET) 的“同场所占比”（时间加权）：
+  share = time{ ask_exchange == bid_exchange } / time{ 两侧场所均有效 }
+使用上一事件状态在区间 [t_{i-1}, t_i) 持有；尾段补到 16:00。
+输出：['symbol','value'] ∈ [0,1]；若分母=0 则 NA。
+Description attribute: RTH time share where ask and bid are on the same venue (TW)
+Required inputs:
+  - required_pv_columns: symbol
+  - required_quote_columns: ask_exchange, bid_exchange, participant_timestamp, symbol
+--------------------------------------------------------------------------------
+Feature name: quote_sip_latency_mean_tw_all
+Defined in: sip_latency_mean_tw.py (QuoteSIPLatencyMeanTWOnefileFeature)
+Docstring:
+Onefile 专用（每天一个 {YYYYMMDD}.parquet）。
+读取 ['symbol','sip_timestamp','participant_timestamp']，单次流式扫描，
+计算 RTH(09:30–16:00 ET) 的“时间加权 SIP 延迟均值”（单位：毫秒）：
+    latency_ms = (sip_timestamp - participant_timestamp) / 1e6
+采用 piecewise-constant：以上一事件的 latency 持有到下一事件；最后补到 16:00。
+输出：['symbol','value'] 与 PV 顺序对齐（ms）。
+Description attribute: RTH time-weighted mean of SIP latency (sip - participant) in ms per symbol (onefile, single pass)
+Required inputs:
+  - required_pv_columns: symbol
+  - required_quote_columns: sip_timestamp, participant_timestamp, symbol
+--------------------------------------------------------------------------------
+Feature name: quote_sip_latency_p95_event_all
+Defined in: sip_latency_p95_event.py (QuoteSIPLatencyP95EventOnefileFeature)
+Docstring:
+Onefile 专用（每天一个 {YYYYMMDD}.parquet），单次流式扫描（直方图近似分位）。
+读取 ['symbol','sip_timestamp','participant_timestamp']，
+在 RTH 内计算“事件级 SIP 延迟”的 p95（单位：毫秒）：
+    latency_ms = max(0, (sip_timestamp - participant_timestamp)/1e6)
+负延迟截断为 0；极端值用固定上界 vmax_ms 截断（默认 3000ms，可用 ctx.latency_max_ms 覆盖）。
+输出：['symbol','value'] 与 PV 顺序对齐。
+Description attribute: RTH event p95 of SIP latency (ms), histogram approximation (onefile, single pass)
+Required inputs:
+  - required_pv_columns: symbol
+  - required_quote_columns: sip_timestamp, participant_timestamp, symbol
+--------------------------------------------------------------------------------
+Feature name: quote_sip_out_of_order_rate_all
+Defined in: sip_out_of_order_rate.py (QuoteSIPOutOfOrderRateOnefileFeature)
+Docstring:
+Onefile 专用（每天一个 {YYYYMMDD}.parquet）。
+读取 ['symbol','sequence_number','sip_timestamp','participant_timestamp']，单次流式扫描，
+计算 RTH 内的“乱序率”（Out-of-Order via SIP）：
+    对相邻事件对（与 RTH 有正交叠时长），若 Δsequence_number>0 且 Δsip_timestamp<=0，则记为乱序。
+    乱序率 = #乱序 / #基数，其中 #基数 = # {Δsequence_number>0 且有正交叠时长}。
+输出：['symbol','value']（∈[0,1]）。
+Description attribute: RTH out-of-order rate: share of (Δseq>0 & Δsip<=0) among pairs with Δseq>0 (onefile)
+Required inputs:
+  - required_pv_columns: symbol
+  - required_quote_columns: sequence_number, sip_timestamp, participant_timestamp, symbol
+--------------------------------------------------------------------------------
+Feature name: quote_size_elasticity_frequency_all
+Defined in: size_elasticity_frequency.py (QuoteSizeElasticityFrequencyOnefileFeature)
+Docstring:
+Onefile 专用（每天一个 {YYYYMMDD}.parquet）。
+读取 ['symbol','bid_price','ask_price','bid_size','ask_size','participant_timestamp']，单次流式扫描，
+在 RTH 内，统计“对应侧最佳价不变”的相邻事件上，尺寸发生变更(Δsize≠0) 的次数，并除以“该侧价格稳定时的总时长（分钟）”：
+    rate_side = # {Δsize ≠ 0 & Δprice = 0} / 稳定时长(分钟)
+最终输出两侧(rate_bid, rate_ask)的平均（仅对有稳定时长的侧取平均）。
+输出：['symbol','value']，单位：次/分钟。
+Description attribute: RTH frequency of size changes per minute when price is unchanged (both sides averaged)
+Required inputs:
+  - required_pv_columns: symbol
+  - required_quote_columns: bid_price, ask_price, bid_size, ask_size, participant_timestamp, symbol
+--------------------------------------------------------------------------------
+Feature name: quote_size_elasticity_magnitude_all
+Defined in: size_elasticity_magnitude.py (QuoteSizeElasticityMagnitudeOnefileFeature)
+Docstring:
+Onefile 专用（每天一个 {YYYYMMDD}.parquet）。
+读取 ['symbol','bid_price','ask_price','bid_size','ask_size','participant_timestamp']，单次流式扫描，
+在 RTH 内、且“对应侧最佳价不变”的相邻事件上，计算 |Δsize| 的事件均值：
+    对 bid 侧：当 Δbid_price=0 时计入 |Δbid_size|
+    对 ask 侧：当 Δask_price=0 时计入 |Δask_size|
+最终输出两侧合并的事件均值。
+输出：['symbol','value']，单位：手（lots）。
+Description attribute: RTH event-mean of |Δsize| conditional on no price change (both sides combined)
+Required inputs:
+  - required_pv_columns: symbol
+  - required_quote_columns: bid_price, ask_price, bid_size, ask_size, participant_timestamp, symbol
+--------------------------------------------------------------------------------
+Feature name: quote_size_imbalance_tw_all
+Defined in: size_imbalance_tw.py (QuoteSizeImbalanceTWOnefileFeature)
+Docstring:
+Onefile 专用（每天一个 {YYYYMMDD}.parquet）。
+读取 ['symbol','ask_size','bid_size','participant_timestamp']，单次流式扫描，
+计算 RTH(09:30–16:00 ET) 的“时间加权队列不平衡”：
+    imb = (bid_size - ask_size) / (bid_size + ask_size)
+采用 piecewise-constant：以上一事件的 imb 持有到下一事件；最后补到 16:00。
+输出：['symbol','value'] 与 PV 顺序对齐。
+Description attribute: RTH time-weighted mean of (bid_size-ask_size)/(bid_size+ask_size) per symbol (onefile, single pass)
+Required inputs:
+  - required_pv_columns: symbol
+  - required_quote_columns: ask_size, bid_size, participant_timestamp, symbol
+--------------------------------------------------------------------------------
+Feature name: quote_spread_all
+Defined in: spread.py (QuoteSpreadOnefileFeature)
+Docstring:
+Onefile 专用（每天一个 {YYYYMMDD}.parquet）。
+只读 ['symbol','ask_price','bid_price','participant_timestamp']，单次流式扫描整天，
+计算按事件简单平均的日内相对价差： 2*(ask - bid) / (ask + bid)，
+仅统计 09:30–16:00 ET（RTH），并将交叉报价(ask<bid)截断为 0。
+输出：['symbol','value'] 按 PV 样本顺序对齐。
+Description attribute: RTH mean of 2*(ask-bid)/(ask+bid) per symbol (onefile, single pass)
+Required inputs:
+  - required_pv_columns: symbol
+  - required_quote_columns: ask_price, bid_price, participant_timestamp, symbol
+--------------------------------------------------------------------------------
+Feature name: quote_stale_quote_share_all
+Defined in: stale_quote_share.py (QuoteStaleQuoteShareOnefileFeature)
+Docstring:
+Onefile 专用（每天一个 {YYYYMMDD}.parquet）。
+读取 ['symbol','sip_timestamp','participant_timestamp']，单次流式扫描，
+计算 RTH 内“陈旧报价占比”（SIP 时间轴）：
+  设阈值 λ（毫秒，默认 ctx.stale_gap_ms 或 500ms），在任意时刻 t，若上一次 SIP 更新距今的间隔 > λ，则视为陈旧。
+  令 RTH=[T0,T1)，给定某 symbol 的 SIP 更新时刻序列 {t0<t1<...}，则陈旧时长为
+      ∑ max(0, min(t_{i+1}, T1) - max(t_i + λ, T0))，
+    另加首尾段：若首个更新 t_first>T0，额外计入 max(0, min(t_first, T1) - (T0 + λ))；
+                 尾段为 max(0, T1 - max(t_last + λ, T0))。
+占比 = 陈旧时长 / (T1 - T0)。输出：['symbol','value'] ∈ [0,1]。
+Description attribute: RTH time share (on SIP timeline) where age since last SIP update exceeds λ (onefile)
+Required inputs:
+  - required_pv_columns: symbol
+  - required_quote_columns: sip_timestamp, participant_timestamp, symbol
+--------------------------------------------------------------------------------
+Feature name: quote_tape_mid_change_z_all
+Defined in: tape_mid_change_zscore.py (QuoteTapeMidChangeZscoreOnefileFeature)
+Docstring:
+Onefile 专用（每天一个 {YYYYMMDD}.parquet）。
+读取 ['symbol','ask_price','bid_price','participant_timestamp','tape']，单次流式扫描，
+计算每个 symbol 的“中价变更强度”（次/分钟），并在各自 Tape 分组内做 z-score 标准化：
+    z = (intensity - mean_tape) / std_tape
+若某 Tape 组样本过少或 std=0，则该组输出 NA。
+Description attribute: Mid-change intensity z-scored within Tape groups (A/B/C) per symbol
+Required inputs:
+  - required_pv_columns: symbol
+  - required_quote_columns: ask_price, bid_price, participant_timestamp, tape, symbol
+--------------------------------------------------------------------------------
+Feature name: quote_tw_spread_all
+Defined in: tw_spread.py (QuoteTWSpreadOnefileFeature)
+Docstring:
+Onefile 专用（每天一个 {YYYYMMDD}.parquet）。
+只读 ['symbol','ask_price','bid_price','participant_timestamp']，单次流式扫描整天，
+计算 RTH(09:30–16:00 ET) 的“时间加权相对价差” 2*(ask - bid)/(ask + bid)。
+采用 piecewise-constant：以上一次事件的值持有到下一事件；最后补到 16:00。
+对交叉/锁定报价 (ask<=bid) 截断为 0。
+输出：['symbol','value'] 按 PV 样本顺序对齐。
+Description attribute: RTH time-weighted mean of 2*(ask-bid)/(ask+bid) per symbol (onefile, single pass)
+Required inputs:
+  - required_pv_columns: symbol
+  - required_quote_columns: ask_price, bid_price, participant_timestamp, symbol
+--------------------------------------------------------------------------------
+Feature name: quote_update_intensity_all
+Defined in: quote_update_intensity.py (QuoteUpdateIntensityOnefileFeature)
+Docstring:
+Onefile 专用（每天一个 {YYYYMMDD}.parquet）。
+读取 ['symbol','sequence_number','participant_timestamp']，单次流式扫描，
+计算 RTH(09:30–16:00 ET) 的“报价事件强度”（QPS）：
+    rate = (∑ Δsequence_number) / (观测时长分钟)
+其中观测时长为相邻事件区间与 RTH 的交叠时长之和；尾段补到 16:00。
+Δsequence_number<0 视为 0（异常或重置）。
+输出：['symbol','value']，单位：事件/分钟。
+Description attribute: RTH rate of quote updates using Δsequence_number per minute (onefile, single pass)
+Required inputs:
+  - required_pv_columns: symbol
+  - required_quote_columns: sequence_number, participant_timestamp, symbol
+--------------------------------------------------------------------------------
+Feature name: quote_venue_switch_rate_all
+Defined in: venue_switch_rate.py (QuoteVenueSwitchRateOnefileFeature)
+Docstring:
+Onefile 专用（每天一个 {YYYYMMDD}.parquet）。
+读取 ['symbol','ask_exchange','bid_exchange','participant_timestamp']，单次流式扫描，
+计算 RTH(09:30–16:00 ET) 的“交易所切换频率”（双侧合并）：
+    每当 ask_exchange 或 bid_exchange 相对上一事件发生变化，计数 +1；
+    频率 = 切换次数 / 观测时长(分钟)。
+输出：['symbol','value']，单位：次/分钟；若无观测时长则 NA。
+Description attribute: RTH rate of venue switches (ask/bid exchange changes per minute), both sides combined
+Required inputs:
+  - required_pv_columns: symbol
+  - required_quote_columns: ask_exchange, bid_exchange, participant_timestamp, symbol
+--------------------------------------------------------------------------------

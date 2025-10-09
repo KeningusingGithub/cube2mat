@@ -1,0 +1,222 @@
+Cube2mat features features starting with 'S':
+================================================================================
+Feature name: sample_entropy_absret_m2_r02
+Defined in: sample_entropy_absret_m2_r02.py (SampleEntropyAbsRetM2R02)
+Docstring: (not provided)
+Description attribute: Sample Entropy of |log returns| with m=2, r=0.2·std(|r|) within RTH.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: semivar_pos_over_neg
+Defined in: semivar_pos_over_neg.py (SemivarPosOverNegFeature)
+Docstring:
+09:30–15:59 内，上/下行半方差比率；若下行半方差<=0 则 NaN。
+Description attribute: Ratio of positive to negative semivariance of log returns.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: share_in_runs_len_ge3
+Defined in: share_in_runs_len_ge3.py (ShareInRunsLenGE3Feature)
+Docstring: (not provided)
+Description attribute: Share of return observations that belong to sign runs with length ≥ 3.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: shock_calm_time_median_q50
+Defined in: shock_calm_time_median_q50.py (ShockCalmTimeMedianQ50Feature)
+Docstring: (not provided)
+Description attribute: Median bars needed after a |r|≥Q90 event for |r| to drop to ≤ median(|r|) again (log-returns, RTH).
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: shock_cluster_density_q90_win5
+Defined in: shock_cluster_density_q90_win5.py (ShockClusterDensityQ90Win5Feature)
+Docstring: (not provided)
+Description attribute: Fraction of |r|≥Q90 shock events that have another shock within ±5 bars (clustering density).
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: shock_followthrough_score_k5
+Defined in: shock_followthrough_score_k5.py (ShockFollowThroughScoreK5Feature)
+Docstring: (not provided)
+Description attribute: Mean of sign(r_shock) * sign(sum of next up-to-5 returns) for |r|≥Q90 events; +1 follow-through, -1 reversal.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: shock_nextbar_reversion_ratio
+Defined in: shock_nextbar_reversion_ratio.py (ShockNextBarReversionRatioFeature)
+Docstring: (not provided)
+Description attribute: Mean of [-sign(r_t)*r_{t+1}/|r_t|] over |r_t|≥Q90 events (log-returns). +值代表平均次棒反转。
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: sign_change_rate
+Defined in: sign_change_rate.py (SignChangeRateFeature)
+Docstring:
+收益符号切换率：
+  rate = count(sign(ret_t) != sign(ret_{t-1}) on nonzero pairs) / count(nonzero pairs)
+Description attribute: Rate of sign flips between consecutive simple returns (excluding zeros).
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: signed_volume_imbalance
+Defined in: signed_volume_imbalance.py (SignedVolumeImbalanceFeature)
+Docstring:
+Net signed volume fraction using tick-rule proxy:
+  value = sum(sign(simple ret)*volume) / sum(volume) in RTH.
+NaN if total volume<=0 or <1 return.
+Description attribute: Signed volume share ∈ [-1,1] based on ret sign proxy.
+Required inputs:
+  - required_full_columns: symbol, time, close, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: signret_majority_agreement_share_m5
+Defined in: signret_majority_agreement_share_m5.py (SignRetMajorityAgreementShareM5Feature)
+Docstring: (not provided)
+Description attribute: Share of bars where sign(r_t) equals the majority sign of the previous 5 nonzero returns (ties/insufficient skipped).
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: spearman_absret_volume
+Defined in: spearman_absret_volume.py (SpearmanAbsRetVolume)
+Docstring: (not provided)
+Description attribute: Spearman rank correlation between |log returns| and volume in RTH.
+Required inputs:
+  - required_full_columns: symbol, time, close, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: spearman_close_n
+Defined in: spearman_close_n.py (SpearmanCloseNFeature)
+Docstring:
+09:30–15:59 内，Spearman 等级相关：corr(rank(close), rank(n))。
+若有效样本<2 或秩方差为 0，则 NaN。
+Description attribute: Spearman rank correlation between close and n within 09:30–15:59.
+Required inputs:
+  - required_full_columns: symbol, time, close, n
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: spearman_close_volume
+Defined in: spearman_close_volume.py (SpearmanCloseVolumeFeature)
+Docstring:
+09:30–15:59 内，Spearman 等级相关：corr(rank(close), rank(volume))。
+若有效样本<2 或全同值导致秩方差为 0，则 NaN。
+Description attribute: Spearman rank correlation between close and volume within 09:30–15:59.
+Required inputs:
+  - required_full_columns: symbol, time, close, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: spectral_entropy_close
+Defined in: spectral_entropy_close.py (SpectralEntropyCloseFeature)
+Docstring:
+Normalized spectral entropy of de-trended close via FFT:
+  - build power spectrum excluding DC; p_i = P_i / sum P
+  - H = -sum p_i log(p_i) / log(m) in [0,1]; NaN if m<2 or invalid.
+Description attribute: Normalized spectral entropy (0..1) of detrended close.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: spectral_lowfreq_share_close
+Defined in: spectral_lowfreq_share_close.py (SpectralLowfreqShareCloseFeature)
+Docstring:
+Low-frequency energy share of de-trended close via FFT:
+  - y = close (RTH), de-trend by OLS on time + remove mean
+  - P = |rfft(y)|^2; exclude DC bin
+  - take first p% of positive frequencies (default p=10%), share = sum(low)/sum(all)
+Description attribute: Share of low-frequency FFT energy of detrended close (p=10%).
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: std_close
+Defined in: std_close.py (StdCloseFeature)
+Docstring:
+09:30–15:59(交易所本地时区，默认 America/New_York) 内，
+按 symbol 计算 close 的样本标准差(ddof=1)；若有效样本<2，则置为 NaN。
+输出列至少包含: ['symbol', 'value']。
+Description attribute: Sample std (ddof=1) of close within 09:30–15:59; NaN if <2 ticks.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: std_close_vwap_diff
+Defined in: std_close_vwap_diff.py (StdCloseVWAPDiffFeature)
+Docstring:
+09:30–15:59 内，（close - vwap）的样本标准差（ddof=1）。
+若有效样本<2 或任一列缺失，则 NaN。
+Description attribute: Sample std of (close - vwap) within 09:30–15:59.
+Required inputs:
+  - required_full_columns: symbol, time, close, vwap
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: std_n
+Defined in: std_n.py (StdNFeature)
+Docstring:
+09:30–15:59(交易所本地时区，默认 America/New_York) 内，
+按 symbol 计算 n(number of trades) 的标准差；若该 symbol 当日有效点 < 3，则置为 NaN。
+输出列至少包含: ['symbol', 'value']。
+Description attribute: Intraday std of trade count (n) between 09:30–15:59; NaN if <3 ticks.
+Required inputs:
+  - required_full_columns: symbol, time, n
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: std_ret
+Defined in: std_ret.py (StdRetFeature)
+Docstring:
+09:30–15:59(交易所本地时区，默认 America/New_York) 内，
+先按 symbol 计算日内逐笔/逐bar 简单收益率 ret = close.pct_change()，
+再计算该 symbol 当日 ret 的标准差；若有效收益率个数 < 3，则置为 NaN。
+输出列至少包含: ['symbol', 'value']。
+Description attribute: Std of intraday simple returns (pct_change of close) between 09:30–15:59; NaN if <3 returns.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: std_trade_size
+Defined in: std_trade_size.py (StdTradeSizeFeature)
+Docstring:
+Std of per-bar average trade size (volume/n) within 09:30–15:59.
+Exclude bars with n<=0; NaN if <3 valid bars.
+Description attribute: Std of per-bar trade size (volume/n) within 09:30–15:59; NaN if <3 valid bars.
+Required inputs:
+  - required_full_columns: symbol, time, volume, n
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: std_volume
+Defined in: std_volume.py (StdVolumeFeature)
+Docstring:
+09:30–15:59(交易所本地时区，默认 America/New_York) 内，
+按 symbol 计算 volume 的标准差；若该 symbol 当日有效点 < 3，则置为 NaN。
+输出列至少包含: ['symbol', 'value']。
+Description attribute: Intraday volume std between 09:30–15:59; NaN if <3 ticks.
+Required inputs:
+  - required_full_columns: symbol, time, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: std_vwap_dev_rel
+Defined in: std_vwap_dev_rel.py (StdVWAPDevRelFeature)
+Docstring:
+Standard deviation of relative deviation (close - vwap)/vwap within RTH.
+NaN if <2 bars or any vwap<=0.
+Description attribute: Std of (close-vwap)/vwap across RTH bars.
+Required inputs:
+  - required_full_columns: symbol, time, close, vwap
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: swing_amplitude_median
+Defined in: swing_amplitude_median.py (SwingAmplitudeMedianFeature)
+Docstring: (not provided)
+Description attribute: Median absolute swing amplitude per sign run (sum of returns over the run, absolute value).
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------

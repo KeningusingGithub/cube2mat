@@ -1,0 +1,512 @@
+Cube2mat features features starting with 'R':
+================================================================================
+Feature name: range_on_logvolume_beta
+Defined in: range_on_logvolume_beta.py (RangeOnLogVolumeBetaFeature)
+Docstring:
+OLS slope for (high - low) ~ 1 + log(volume) within RTH.
+Returns NaN if variance of log(volume) is 0 or insufficient data.
+Description attribute: OLS beta of (high-low) on log(volume) in RTH.
+Required inputs:
+  - required_full_columns: symbol, time, high, low, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: range_per_trade
+Defined in: range_per_trade.py (RangePerTradeFeature)
+Docstring:
+Session range per trade: (H-L)/sum(n) within RTH. NaN if H<=L or sum(n)<=0.
+Description attribute: Price range divided by total trade count in RTH.
+Required inputs:
+  - required_full_columns: symbol, time, high, low, n
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: range_to_rv_sqrt_ratio
+Defined in: range_to_rv_sqrt_ratio.py (RangeToRVSqrtRatio)
+Docstring: (not provided)
+Description attribute: Log session range log(high_max/low_min) divided by sqrt(Σ r^2) using RTH log-returns.
+Required inputs:
+  - required_full_columns: symbol, time, high, low, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: range_up_down_ratio
+Defined in: range_up_down_ratio.py (RangeUpDownRatioFeature)
+Docstring:
+以 (high-low) 作为区间尺度，对应上涨/下跌状态的总和之比：
+  ratio = sum(range|ret>0) / sum(range|ret<0)
+任一侧分母<=0 则 NaN。
+Description attribute: Sum(high-low) on up bars divided by that on down bars.
+Required inputs:
+  - required_full_columns: symbol, time, high, low, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: relprice_log_elasticity_n
+Defined in: relprice_log_elasticity_n.py (RelPriceLogElasticityNFeature)
+Docstring:
+09:30–15:59 内，弹性回归：log(close/anchor) ~ log(n)，anchor=首笔 open（若无则首笔 close）。
+仅使用 close>0 且 n>0 的样本。返回斜率（对数弹性）。
+若有效样本<2 或 var(log(n))=0，则 NaN。
+Description attribute: Elasticity: slope of log(close/anchor) on log(n) within 09:30–15:59.
+Required inputs:
+  - required_full_columns: symbol, time, open, close, n
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: relprice_log_elasticity_volume
+Defined in: relprice_log_elasticity_volume.py (RelPriceLogElasticityVolumeFeature)
+Docstring:
+09:30–15:59 内，弹性回归：log(close/anchor) ~ log(volume)，anchor=首笔 open（若无则首笔 close）。
+仅使用 close>0 且 volume>0 的样本。返回斜率（对数弹性）。
+若有效样本<2 或 var(log(volume))=0，则 NaN。
+Description attribute: Elasticity: slope of log(close/anchor) on log(volume) within 09:30–15:59.
+Required inputs:
+  - required_full_columns: symbol, time, open, close, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: ret_es_q05
+Defined in: ret_es_q05.py (RetESQ05Feature)
+Docstring:
+5% Expected Shortfall (ES) of intraday log returns within 09:30–15:59.
+  r = diff(log(close)); q = quantile(r,0.05); ES = mean(r[r<=q])
+NaN if <3 returns or tail empty.
+Description attribute: 5% ES (expected shortfall) of intraday log returns (RTH).
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: ret_excess_kurtosis
+Defined in: ret_excess_kurtosis.py (RetExcessKurtosisFeature)
+Docstring:
+log 收益的样本修正超额峰度（fat tails）：
+  g2 = [n(n+1)/((n-1)(n-2)(n-3))]*m4/s^2 - [3(n-1)^2/((n-2)(n-3))]
+  其中 s^2 为样本方差(ddof=1)，m4 = (1/n) * sum((r-mean)^4)。
+n<4 或 s^2<=0 则 NaN。
+Description attribute: Sample-adjusted excess kurtosis of intraday log returns.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: ret_next_on_vwapdev_beta
+Defined in: ret_next_on_vwapdev_beta.py (RetNextOnVWAPDevBetaFeature)
+Docstring:
+OLS slope of next simple return on normalized deviation d_t = (close - vwap) / vwap.
+y = ret_{t+1}; x = d_t within RTH.
+Returns NaN if insufficient data or zero variance.
+Description attribute: Beta of next ret on (close-vwap)/vwap deviation (RTH).
+Required inputs:
+  - required_full_columns: symbol, time, close, vwap
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: ret_skew
+Defined in: ret_skew.py (RetSkewFeature)
+Docstring:
+09:30–15:59 内，log 收益的样本修正偏度：
+  g1 = [n/((n-1)(n-2))] * sum((r-mean)^3) / s^3，s=样本标准差(ddof=1)。
+Description attribute: Sample-adjusted skewness of intraday log returns.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: ret_up_down_abs_magnitude_ratio
+Defined in: ret_up_down_abs_magnitude_ratio.py (RetUpDownAbsMagnitudeRatio)
+Docstring: (not provided)
+Description attribute: Sum of positive |r| divided by sum of negative |r| for RTH log-returns.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: ret_var_q05
+Defined in: ret_var_q05.py (RetVaRQ05Feature)
+Docstring:
+5% VaR of intraday log returns within 09:30–15:59.
+r = diff(log(close)); VaR_5 = quantile(r, 0.05). NaN if <3 returns.
+Description attribute: 5% quantile VaR of intraday log returns (RTH).
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: return_contribution_top_quintile_by_volume
+Defined in: return_contribution_top_quintile_by_volume.py (ReturnContributionTopQuintileByVolumeFeature)
+Docstring: (not provided)
+Description attribute: Share of Σ|r| contributed by bars in the top 20% of volume (threshold by volume 80th percentile).
+Required inputs:
+  - required_full_columns: symbol, time, close, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: return_vol_u_shape_ratio
+Defined in: return_vol_u_shape_ratio.py (ReturnVolUShapeRatio)
+Docstring: (not provided)
+Description attribute: ((std r in 09:30–10:29 + std r in 15:00–15:59)/2) / std r in 11:00–14:00 (log-returns).
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: reversal_prob_after_big_down
+Defined in: reversal_prob_after_big_down.py (ReversalProbAfterBigDownFeature)
+Docstring:
+大幅下跌后的反转概率：
+  取当日 simple return 的 10% 分位数 q10，触发集 B={t: ret_t <= q10}；
+  统计 P(ret_{t+1}>0 | t∈B)。触发样本<3 则 NaN。
+Description attribute: P(next ret > 0 | current ret in bottom 10%).
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: reversal_prob_after_big_up
+Defined in: reversal_prob_after_big_up.py (ReversalProbAfterBigUpFeature)
+Docstring:
+大幅上涨后的反转概率：
+  取当日 simple return 的 90% 分位数 q90，触发集 A={t: ret_t >= q90}；
+  统计 P(ret_{t+1}<0 | t∈A)。触发样本<3 则 NaN。
+Description attribute: P(next ret < 0 | current ret in top 10% by magnitude and positive).
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: rms_vwap_dev_rel
+Defined in: rms_vwap_dev_rel.py (RMSVWAPDevRelFeature)
+Docstring:
+RMS of relative deviation z_t = (close - vwap)/vwap within RTH.
+NaN if any vwap<=0 or <1 bar.
+Description attribute: sqrt(mean(((close-vwap)/vwap)^2)) across RTH bars.
+Required inputs:
+  - required_full_columns: symbol, time, close, vwap
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: robust_vol_mad_ret
+Defined in: robust_vol_mad_ret.py (RobustVolMADRetFeature)
+Docstring:
+09:30–15:59 内，基于 log 收益的稳健波动率：
+  sigma ≈ 1.4826 * median(|r - median(r)|)；close>0。
+Description attribute: Robust volatility via MAD on log returns.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: rogers_satchell_session_vol
+Defined in: rogers_satchell_session_vol.py (RogersSatchellSessionVolFeature)
+Docstring:
+会话级 Rogers–Satchell 波动率（基于 O/H/L/C 聚合）：
+  var_RS = ln(H/C)*ln(H/O) + ln(L/C)*ln(L/O)
+  vol    = sqrt(max(var_RS, 0))
+要求 O,H,L,C > 0，否则 NaN。
+Description attribute: Session-level Rogers–Satchell volatility using aggregated O/H/L/C.
+Required inputs:
+  - required_full_columns: symbol, time, open, high, low, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: roll_spread
+Defined in: roll_spread.py (RollSpreadFeature)
+Docstring:
+09:30–15:59 内，Roll 有效价差估计：
+  Δp_t = close_t - close_{t-1}
+  gamma = Cov(Δp_t, Δp_{t-1})（样本协方差）
+  若 gamma < 0，spread = 2 * sqrt(-gamma)，否则 NaN。
+使用 bar 级价格近似成交价。样本<3 或无效时 NaN。
+Description attribute: Roll effective spread estimator from lag-1 autocovariance of price changes within 09:30–15:59.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: rq_logret
+Defined in: rq_logret.py (RQLogRetFeature)
+Docstring:
+09:30–15:59 内，RQ = (N/3) * sum(r_t^4)，r_t = diff(log(close))，close>0；N=有效 r_t 数。
+用于估计波动的方差（“vol of vol”尺度）。
+Description attribute: Realized quarticity (N/3)*sum(r^4) using log returns.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: run_balance_index
+Defined in: run_balance_index.py (RunBalanceIndexFeature)
+Docstring: (not provided)
+Description attribute: Run-balance index: (mean length of up runs − mean length of down runs) / (sum of the two means).
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: run_count_total
+Defined in: run_count_total.py (RunCountTotalFeature)
+Docstring: (not provided)
+Description attribute: Total number of sign runs in intraday log-returns (zeros break runs).
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: run_len_var_ratio_up_to_down
+Defined in: run_len_var_ratio_up_to_down.py (RunLenVarRatioUpToDownFeature)
+Docstring: (not provided)
+Description attribute: Variance of up-run lengths divided by variance of down-run lengths (zeros break runs).
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: run_length_entropy_signret
+Defined in: run_length_entropy_signret.py (RunLengthEntropySignRet)
+Docstring: (not provided)
+Description attribute: Shannon entropy of sign-run length distribution for log returns in RTH, normalized by log2(#unique lengths).
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: rv_after_shock_share_k10
+Defined in: rv_after_shock_share_k10.py (RVAfterShockShareK10Feature)
+Docstring: (not provided)
+Description attribute: Share of daily RV (Σr^2) occurring in the union of 10-bar windows that follow |r|≥Q90 shock bars.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: rv_close_vwap_diff
+Defined in: rv_close_vwap_diff.py (RVDiffCloseVWAPFeature)
+Docstring:
+相对 VWAP 溢价（close - vwap）的已实现“变差”（一阶差分的平方和）：
+  x_t = close_t - vwap_t；RV_diff = sum( (x_t - x_{t-1})^2 )。
+需成对有效 close/vwap；有效差分<1 则 NaN。
+Description attribute: Realized variance of (close - vwap): sum of squared first differences.
+Required inputs:
+  - required_full_columns: symbol, time, close, vwap
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: rv_compaction_50pct_bars_frac
+Defined in: rv_compaction_50pct_bars_frac.py (RVCompaction50PctBarsFracFeature)
+Docstring: (not provided)
+Description attribute: Fraction of RTH bars needed to reach 50% of Σ r^2 (compaction at the half-mass of realized variance).
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: rv_compaction_80pct_bars_frac
+Defined in: rv_compaction_80pct_bars_frac.py (RVCompaction80PctBarsFracFeature)
+Docstring: (not provided)
+Description attribute: Fraction of RTH bars (by count) needed to accumulate 80% of Σ r^2 (log-returns), sorting r^2 descending.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: rv_cond_above_vwap
+Defined in: rv_cond_above_vwap.py (RVCondAboveVWAPFeature)
+Docstring:
+仅在 close>vwap 时累积的 RV：∑ r^2 (logret)，对齐到收益终点。
+有效收益 <3 或无满足条件的收益 → NaN。
+Description attribute: Sum of r^2 (logret) while close>vwap within RTH.
+Required inputs:
+  - required_full_columns: symbol, time, close, vwap
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: rv_cond_below_vwap
+Defined in: rv_cond_below_vwap.py (RVCondBelowVWAPFeature)
+Docstring:
+仅在 close≤vwap 时累积的 RV：∑ r^2 (logret)，对齐到收益终点。
+无满足条件的收益 → NaN。
+Description attribute: Sum of r^2 (logret) while close≤vwap within RTH.
+Required inputs:
+  - required_full_columns: symbol, time, close, vwap
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: rv_cond_down
+Defined in: rv_cond_down.py (RVCondDownFeature)
+Docstring:
+仅在下行 bar (simple ret<0) 时累积的 RV：∑ r^2 (logret)。
+无满足条件的收益 → NaN。
+Description attribute: RV contributed by down bars (simple ret<0) in RTH.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: rv_cond_up
+Defined in: rv_cond_up.py (RVCondUpFeature)
+Docstring:
+仅在上行 bar (simple ret>0) 时累积的 RV：∑ r^2 (logret)。
+无满足条件的收益 → NaN。
+Description attribute: RV contributed by up bars (simple ret>0) in RTH.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: rv_entropy_concentration
+Defined in: rv_entropy_concentration.py (RVEntropyConcentrationFeature)
+Docstring:
+1 - normalized Shannon entropy of r^2 distribution in RTH:
+  r=diff(log close); p_i=r_i^2 / sum r^2; H=-sum p log p; conc = 1 - H/log(m) in [0,1].
+NaN if <3 returns or RV<=0.
+Description attribute: 1 - normalized entropy of realized-variance contributions.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: rv_front_loading_score
+Defined in: rv_front_loading_score.py (RVFrontLoadingScoreFeature)
+Docstring:
+Front-loading score for realized variance r^2.
+Description attribute: 2*AUC(cum RV fraction vs time fraction)-1 within RTH.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: rv_gini_concentration
+Defined in: rv_gini_concentration.py (RVGiniConcentrationFeature)
+Docstring:
+RV 的 Gini 集中度（r^2 的不均衡程度）：
+  对 y_i = r_i^2（i=1..n），按升序排序：
+  G = [sum_{i=1}^n (2i - n - 1) * y_i] / [n * sum y_i]，取值 ∈ [0,1)；越大越集中。
+若 sum y_i <= 0 或 n<2 则 NaN。
+Description attribute: Gini concentration of realized variance contributions r^2.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: rv_last15m_share
+Defined in: rv_last15m_share.py (RVLast15mShareFeature)
+Docstring:
+尾盘 15 分钟 (15:45–15:59) 对日内 RV 的贡献份额。
+RV=∑ r^2, r=logret。总 RV<=0 或有效收益<3 → NaN。
+Description attribute: Share of RV from 15:45–15:59 within RTH.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: rv_last30m_share
+Defined in: rv_last30m_share.py (RVLast30mShareFeature)
+Docstring:
+末 30 分钟已实现方差占比：
+  share = sum_{t in last30m}(r_t^2) / sum_{all}(r_t^2)
+r_t = diff(log(close))；close>0。若分母<=0 则 NaN。
+Description attribute: Share of realized variance contributed by the last 30 minutes of the session.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: rv_logret
+Defined in: rv_logret.py (RVLogRetFeature)
+Docstring:
+09:30–15:59 内，RV = sum( r_t^2 )，r_t = diff(log(close))，仅使用 close>0。
+若有效 r_t<1 则 NaN。
+Description attribute: Realized variance using log returns: sum(diff(log(close))^2).
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: rv_logret_15m
+Defined in: rv_logret_15m.py (RVLogret15mFeature)
+Docstring:
+RV on 15-minute resampled close (last in bin), within 09:30–15:59.
+Description attribute: Realized variance of log returns on 15-minute resampled close within 09:30–15:59.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: rv_logret_30m
+Defined in: rv_logret_30m.py (RVLogret30mFeature)
+Docstring:
+RV on 30-minute resampled close (last in bin) within 09:30–15:59.
+Description attribute: Realized variance using log returns on 30-minute resampled close in 09:30–15:59.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: rv_logret_5m
+Defined in: rv_logret_5m.py (RVLogret5mFeature)
+Docstring:
+Downsample close to 5-minute bars within 09:30–15:59 (last price per bin),
+then compute RV using log returns on the resampled series.
+Description attribute: Realized variance of log returns on 5-minute resampled close within 09:30–15:59.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: rv_per_min_logret
+Defined in: rv_per_min_logret.py (RVPerMinLogRetFeature)
+Docstring:
+09:30–15:59 内，RV 每分钟强度： sum(diff(log(close))^2) / TOTAL_MIN；close>0。
+Description attribute: RV per-minute intensity: RV divided by session total minutes (389).
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: rv_per_trade
+Defined in: rv_per_trade.py (RVPerTrade)
+Docstring: (not provided)
+Description attribute: Realized variance Σ r^2 divided by total trade count Σ n over RTH.
+Required inputs:
+  - required_full_columns: symbol, time, close, n
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: rv_per_volume
+Defined in: rv_per_volume.py (RVPerVolumeFeature)
+Docstring:
+Realized variance per unit volume in RTH:
+  r=diff(log close); RV=sum r^2; value = RV / sum(volume). NaN if RV<=0 or sum(volume)<=0.
+Description attribute: Realized variance divided by total volume (RTH).
+Required inputs:
+  - required_full_columns: symbol, time, close, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: rv_share_above_vwap
+Defined in: rv_share_above_vwap.py (RVShareAboveVWAPFeature)
+Docstring:
+以 log 收益 r=diff(log(close)) 计算 RV：
+  share = sum(r^2 於 (close>vwap)) / sum(r^2 全部)
+要求 close>0。
+Description attribute: Share of realized variance (log ret) contributed while close>vwap.
+Required inputs:
+  - required_full_columns: symbol, time, close, vwap
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: rv_truncated_logret_k35
+Defined in: rv_truncated_logret_k35.py (RVTruncatedLogretK35Feature)
+Docstring:
+Realized variance of log returns after truncation by robust MAD threshold.
+Steps:
+  1) 09:30–15:59, per symbol logret r = diff(log(close))
+  2) Robust scale via MAD: sigma_mad = 1.4826 * median(|r - median(r)|)
+  3) Keep |r| <= k*sigma_mad (k=3.5); if sigma_mad==0 fallback to keep all
+  4) RV = sum(r^2) over kept returns; NaN if <3 returns after filtering.
+Description attribute: Realized variance of log returns after truncation at 3.5×MAD within 09:30–15:59; NaN if <3 returns.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: rv_winsorized_logret_k35
+Defined in: rv_winsorized_logret_k35.py (RVWinsorizedLogretK35Feature)
+Docstring:
+Realized variance of log returns with winsorization at 3.5×MAD.
+Steps:
+  1) r = diff(log(close)) within 09:30–15:59
+  2) sigma_mad = 1.4826 * MAD(r)
+  3) r_w = clip(r, -k*sigma_mad, +k*sigma_mad) with k=3.5 (if sigma_mad>0)
+  4) RV = sum(r_w^2); NaN if <3 returns.
+Description attribute: Winsorized realized variance of log returns at 3.5×MAD within 09:30–15:59; NaN if <3 returns.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: rvol_ewma_logret_097
+Defined in: rvol_ewma_logret_097.py (RVolEWMALogret097Feature)
+Docstring:
+Instantaneous rvol via EWMA of r^2 with lambda=0.97 (minute-level).
+Steps:
+  r = diff(log(close)); S_t = λ*S_{t-1} + (1-λ)*r_t^2; output sqrt(S_last).
+  NaN if <3 returns.
+Description attribute: EWMA instantaneous realized volatility (sqrt of EWMA of r^2) with λ=0.97 within 09:30–15:59.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: rvol_logret
+Defined in: rvol_logret.py (RVolLogRetFeature)
+Docstring:
+09:30–15:59 内，已实现波动率 = sqrt( sum( diff(log(close))^2 ) )；close>0。
+Description attribute: Realized volatility: sqrt of RV using log returns.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: rvol_over_sqrt_trades
+Defined in: rvol_over_sqrt_trades.py (RVolOverSqrtTradesFeature)
+Docstring:
+Invariance proxy: sqrt( sum r^2 ) / sqrt( sum n ), r=log returns in RTH.
+NaN if RV<=0 or sum(n)<=0 or <3 returns.
+Description attribute: sqrt(RV)/sqrt(total trades) invariance proxy (RTH).
+Required inputs:
+  - required_full_columns: symbol, time, close, n
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------

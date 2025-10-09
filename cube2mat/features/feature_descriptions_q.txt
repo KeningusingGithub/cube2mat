@@ -1,0 +1,21 @@
+Cube2mat features features starting with 'Q':
+================================================================================
+Feature name: qn_vol_logret
+Defined in: qn_vol_logret.py (QnVolLogRetFeature)
+Docstring:
+基于 log 收益的 Qn 稳健尺度估计（Rousseeuw & Croux）：
+  Qn = c * Q1( |r_i - r_j|, i<j )，其中 c ≈ 2.2219 使其对正态分布一致。
+有效 r 数 < 3 则 NaN。复杂度 O(n^2)，但 n≈bar 数，通常可接受。
+Description attribute: Robust Qn scale (2.2219 * 1st quartile of pairwise |Δr|) for log returns.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: quietest_stretch_maxlen_q25_absret_frac
+Defined in: quietest_stretch_maxlen_q25_absret_frac.py (QuietestStretchMaxLenQ25AbsRetFrac)
+Docstring: (not provided)
+Description attribute: Longest run length (as a fraction of return count) where |r| ≤ Q25(|r|) within RTH (log-returns).
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------

@@ -1,0 +1,44 @@
+Cube2mat features features starting with 'X':
+================================================================================
+Feature name: xcorr_n_absret_lag1
+Defined in: xcorr_n_absret_lag1.py (XCorrNAbsRetLag1Feature)
+Docstring:
+Correlation between n_t and |logret_{t+1}| within RTH.
+Returns NaN if fewer than 3 pairs or zero variance.
+Description attribute: Lead-lag corr: trades count leads |logret| by 1 bar.
+Required inputs:
+  - required_full_columns: symbol, time, close, n
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: xcorr_sign_volume_leadlag_lag
+Defined in: xcorr_sign_volume_leadlag_lag.py (XCorrSignVolumeLeadLagLagFeature)
+Docstring:
+sign(simple ret) 与 volume 滞后互相关峰值所在的滞后：
+  计算 Corr(sign_ret_t, volume_{t+lag})，lag ∈ [-K,K]，
+  返回使 |corr| 最大的 lag（负值表示量领先）。样本不足时 NaN。
+Description attribute: Lag of peak |corr(sign(ret), volume shift)| over [-5,5] in RTH.
+Required inputs:
+  - required_full_columns: symbol, time, close, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: xcorr_sign_volume_leadlag_peak
+Defined in: xcorr_sign_volume_leadlag_peak.py (XCorrSignVolumeLeadLagPeakFeature)
+Docstring:
+sign(simple ret) 与 volume 的滞后互相关峰值：
+  计算 Corr(sign_ret_t, volume_{t+lag})，lag ∈ [-K,K]，返回最大绝对值。
+样本不足时 NaN。
+Description attribute: Peak |corr(sign(ret), volume shift)| over lags [-5,5] in RTH.
+Required inputs:
+  - required_full_columns: symbol, time, close, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: xcorr_volume_absret_lag1
+Defined in: xcorr_volume_absret_lag1.py (XCorrVolumeAbsRetLag1Feature)
+Docstring:
+Pearson correlation between volume_t and |logret_{t+1}| within 09:30–15:59.
+NaN if <3 pairs or zero variance.
+Description attribute: Corr(volume_t, |logret_{t+1}|) in RTH; lead-lag (volume leads).
+Required inputs:
+  - required_full_columns: symbol, time, close, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------

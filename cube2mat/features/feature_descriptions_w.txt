@@ -1,0 +1,26 @@
+Cube2mat features features starting with 'W':
+================================================================================
+Feature name: wavelet_energy_highfreq_share
+Defined in: wavelet_energy_highfreq_share.py (WaveletEnergyHighfreqShareFeature)
+Docstring:
+High-frequency energy share via Haar DWT on detrended close (L=3):
+  detrend close by OLS on time, zero-mean; do L-level Haar; low = sum(a_L^2); total=sum(e^2);
+  value = 1 - low/total in [0,1]. NaN if insufficient.
+Description attribute: Haar-DWT high-frequency energy share of detrended close (L=3).
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: wavelet_energy_lowfreq_share
+Defined in: wavelet_energy_lowfreq_share.py (WaveletEnergyLowfreqShareFeature)
+Docstring:
+Haar 小波分解后，近似系数能量占比：
+  - close 对时间做 OLS 去趋势并去均值
+  - 进行 L=3 级 Haar 分解，取最终近似 a_L
+  - value = sum(a_L^2) / sum(残差^2)
+样本不足或总能量<=0 → NaN。
+Description attribute: Haar-DWT low-frequency energy share of detrended close (L=3).
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------

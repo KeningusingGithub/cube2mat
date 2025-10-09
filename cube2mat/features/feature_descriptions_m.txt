@@ -1,0 +1,186 @@
+Cube2mat features features starting with 'M':
+================================================================================
+Feature name: max_absret_value
+Defined in: max_absret_value.py (MaxAbsRetValueFeature)
+Docstring:
+Max absolute simple return within 09:30–15:59.
+Description attribute: Session max |simple return| in RTH.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: max_down_run_len
+Defined in: max_down_run_len.py (MaxDownRunLenFeature)
+Docstring:
+最长连跌长度（ret<0 的连续段最大长度）。
+Description attribute: Maximum consecutive length of negative-return run.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: max_drawdown_depth_per_bar
+Defined in: max_drawdown_depth_per_bar.py (MaxDrawdownDepthPerBarFeature)
+Docstring: (not provided)
+Description attribute: Maximum drawdown depth divided by its duration in bars (uses close; depth as positive number).
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: max_up_run_len
+Defined in: max_up_run_len.py (MaxUpRunLenFeature)
+Docstring:
+最长连涨长度（ret>0 的连续段最大长度）。
+Description attribute: Maximum consecutive length of positive-return run.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: mean_abs_vwap_gap
+Defined in: mean_abs_vwap_gap.py (MeanAbsVWAPGapFeature)
+Docstring:
+Mean absolute gap between close and vwap within 09:30–15:59.
+NaN if <1 valid gap.
+Description attribute: Mean of |close - vwap| during RTH; NaN if no valid bars.
+Required inputs:
+  - required_full_columns: symbol, time, close, vwap
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: mean_body_to_range
+Defined in: mean_body_to_range.py (MeanBodyToRangeFeature)
+Docstring:
+Mean of |close-open| / (high-low) over RTH bars; exclude bars with (high-low)<=0.
+Description attribute: Mean candlestick body-to-range ratio in RTH; exclude zero-range bars.
+Required inputs:
+  - required_full_columns: symbol, time, open, high, low, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: mean_close_vwap_rel_diff
+Defined in: mean_close_vwap_rel_diff.py (MeanCloseVWAPRelDiffFeature)
+Docstring:
+Mean relative premium of close vs vwap: mean((close - vwap) / vwap) in RTH.
+Description attribute: Average (close - vwap)/vwap over RTH bars.
+Required inputs:
+  - required_full_columns: symbol, time, close, vwap
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: mean_over_median_absret
+Defined in: mean_over_median_absret.py (MeanOverMedianAbsRetFeature)
+Docstring:
+Ratio mean(|logret|)/median(|logret|) within 09:30–15:59.
+NaN if <3 returns or median==0.
+Description attribute: mean(|logret|)/median(|logret|) as tail-sensitivity proxy (RTH).
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: mean_run_length_sign
+Defined in: mean_run_length_sign.py (MeanRunLengthSignFeature)
+Docstring:
+Mean run length of non-zero simple-return signs in RTH (combine up & down runs).
+Returns NaN if fewer than two non-zero signs or no runs.
+Description attribute: Average length of consecutive non-zero sign runs (RTH).
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: mean_volume_per_trade_down
+Defined in: mean_volume_per_trade_down.py (MeanVolPerTradeDownFeature)
+Docstring:
+下跌状态的“每笔平均量”： sum(volume|ret<0)/sum(n|ret<0)。
+Description attribute: Average volume per trade on down bars.
+Required inputs:
+  - required_full_columns: symbol, time, close, volume, n
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: mean_volume_per_trade_up
+Defined in: mean_volume_per_trade_up.py (MeanVolPerTradeUpFeature)
+Docstring:
+上涨状态的“每笔平均量”： sum(volume|ret>0)/sum(n|ret>0)。
+sum(n)<=0 则 NaN。
+Description attribute: Average volume per trade on up bars.
+Required inputs:
+  - required_full_columns: symbol, time, close, volume, n
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: median_position_in_range
+Defined in: median_position_in_range.py (MedianPositionInRangeFeature)
+Docstring:
+Median of position p_t = (close_t - L)/(H - L) in RTH, H=max(high), L=min(low).
+In [0,1]; NaN if (H-L)<=0 or no bars.
+Description attribute: Median normalized position of close within session range.
+Required inputs:
+  - required_full_columns: symbol, time, high, low, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: midday_lull_rv_ratio
+Defined in: midday_lull_rv_ratio.py (MiddayLullRVRatioFeature)
+Docstring:
+RV density ratio at midday (12:00–12:59):
+  ratio = (sum r^2_mid / sum r^2_total) / (count_ret_mid / count_ret_total).
+NaN if RV_total<=0 or insufficient returns.
+Description attribute: RV density at midday vs session average.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: midday_smallmove_share_q25
+Defined in: midday_smallmove_share_q25.py (MiddaySmallMoveShareQ25)
+Docstring: (not provided)
+Description attribute: Share of bars in 11:00–14:00 with |logret| ≤ overall RTH 25th percentile of |logret|.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: midday_volume_ratio
+Defined in: midday_volume_ratio.py (MiddayVolumeRatioFeature)
+Docstring:
+Mean(volume) in 12:00–12:59 divided by mean(volume) over entire RTH.
+NaN if denominators invalid or segments empty.
+Description attribute: Midday (12-13h) mean volume / session mean volume.
+Required inputs:
+  - required_full_columns: symbol, time, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: midrange_cross_count
+Defined in: midrange_cross_count.py (MidRangeCrossCount)
+Docstring: (not provided)
+Description attribute: Count of sign flips of (close − midrange) where midrange = (H+L)/2 using RTH session H/L; zeros ignored.
+Required inputs:
+  - required_full_columns: symbol, time, high, low, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: motif_ascending_share_m3_close
+Defined in: motif_ascending_share_m3_close.py (MotifAscendingShareM3Close)
+Docstring: (not provided)
+Description attribute: Share of 3-bar windows where close is strictly increasing (ordinal motif [0,1,2]) within RTH.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: motif_zigzag_share_m3_close
+Defined in: motif_zigzag_share_m3_close.py (MotifZigZagShareM3Close)
+Docstring: (not provided)
+Description attribute: Share of 3-bar windows where the middle close is a strict local extremum (peak or trough) within RTH.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: mutual_info_ret_volume_q8
+Defined in: mutual_info_ret_volume_q8.py (MutualInfoRetVolumeQ8)
+Docstring: (not provided)
+Description attribute: Mutual information I(R;V) in bits between log returns and volume using quantile bins (8×8) within RTH.
+Required inputs:
+  - required_full_columns: symbol, time, close, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: mvpt_up_over_down_ratio
+Defined in: mvpt_up_over_down_ratio.py (MVPTUpOverDownRatioFeature)
+Docstring:
+上/下“每笔平均量”之比：
+  ratio = [sum(vol|ret>0)/sum(n|ret>0)] / [sum(vol|ret<0)/sum(n|ret<0)]
+分母<=0 时 NaN。
+Description attribute: Ratio of mean volume per trade on up vs down bars.
+Required inputs:
+  - required_full_columns: symbol, time, close, volume, n
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------

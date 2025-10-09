@@ -1,0 +1,87 @@
+Cube2mat features features starting with 'I':
+================================================================================
+Feature name: impact_elasticity_log
+Defined in: impact_elasticity_log.py (ImpactElasticityLogFeature)
+Docstring:
+Elasticity of impact: OLS slope in log|ret| ~ log(volume).
+Steps:
+  - r = diff(log(close)); use bars with |r|>0 and volume>0
+  - y = log(|r|), x = log(volume)
+  - beta = Cov(x,y)/Var(x); NaN if <8 points or Var(x)=0.
+Description attribute: OLS slope of log|logret| on log(volume) within 09:30–15:59.
+Required inputs:
+  - required_full_columns: symbol, time, close, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: impact_reversion_beta1
+Defined in: impact_reversion_beta1.py (ImpactReversionBeta1Feature)
+Docstring:
+OLS slope in: next_ret_simple ~ current volume, within 09:30–15:59.
+Positive beta: higher volume predicts higher next return; negative implies reversion.
+NaN if <8 pairs or Var(volume)=0.
+Description attribute: OLS slope of next simple return on current volume within 09:30–15:59.
+Required inputs:
+  - required_full_columns: symbol, time, close, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: impact_slope_price_cumn
+Defined in: impact_slope_price_cumn.py (ImpactSlopePriceCumNFeature)
+Docstring:
+OLS slope of (close - first_open) on cumulative trade count within RTH.
+NaN if insufficient or var(cum_n)=0.
+Description attribute: OLS beta of (close - first_open) on cumulative n (RTH).
+Required inputs:
+  - required_full_columns: symbol, time, open, close, n
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: impact_slope_price_cumvol
+Defined in: impact_slope_price_cumvol.py (ImpactSlopePriceCumVolFeature)
+Docstring:
+09:30–15:59 内，回归 y ~ x：
+  y = close - first_open   （以首笔 open 为锚的价格变动）
+  x = 累积成交量 cumsum(volume)
+输出斜率（单位：价格/股）。若样本<2 或 var(x)=0，则 NaN。
+若首笔 open 缺失，退化为以首笔 close 为锚。
+Description attribute: OLS slope of (close - first_open) on cumulative volume within 09:30–15:59; NaN if insufficient.
+Required inputs:
+  - required_full_columns: symbol, time, open, close, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: intraday_max_drawdown_close
+Defined in: intraday_max_drawdown_close.py (IntradayMaxDrawdownCloseFeature)
+Docstring:
+Max drawdown of close within 09:30–15:59, as a fraction.
+Description attribute: Session max drawdown (fraction) computed from close during RTH.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: intraday_max_drawup_close
+Defined in: intraday_max_drawup_close.py (IntradayMaxDrawupCloseFeature)
+Docstring:
+Maximum intraday drawup on close in RTH:
+  max_t (close_t / running_min_up_to_t - 1). NaN if <2 closes.
+Description attribute: Max drawup using close (RTH).
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: iqr_logret
+Defined in: iqr_logret.py (IQRLogRet)
+Docstring: (not provided)
+Description attribute: Interquartile range (Q3−Q1) of intraday log returns within RTH.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: iqr_vol_logret
+Defined in: iqr_vol_logret.py (IQRVolLogRetFeature)
+Docstring:
+基于 log 收益的稳健波动率（IQR 标定）：
+  r = diff(log(close))；sigma_IQR ≈ 0.7413 * IQR(r) = 0.7413 * (Q75 - Q25)。
+有效 r 数 < 3 则 NaN。
+Description attribute: Robust volatility via 0.7413*IQR of log returns.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------

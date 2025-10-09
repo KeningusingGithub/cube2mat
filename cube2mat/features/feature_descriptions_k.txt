@@ -1,0 +1,34 @@
+Cube2mat features features starting with 'K':
+================================================================================
+Feature name: katz_fd_close
+Defined in: katz_fd_close.py (KatzFDClose)
+Docstring: (not provided)
+Description attribute: Katz fractal dimension of the close path during RTH (09:30–15:59); higher = more tortuous.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: kyle_lambda_lead1_beta
+Defined in: kyle_lambda_lead1_beta.py (KyleLambdaLead1BetaFeature)
+Docstring:
+OLS slope (beta) of next simple return on signed volume proxy:
+  x_t = sign(ret_t) * volume_t, y_t = ret_{t+1}.
+Reduces endogeneity vs contemporaneous spec. NaN if insufficient.
+Description attribute: Beta of ret_{t+1} on sign(ret_t)*volume_t (Kyle λ proxy).
+Required inputs:
+  - required_full_columns: symbol, time, close, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: kyle_lambda_proxy
+Defined in: kyle_lambda_proxy.py (KyleLambdaProxyFeature)
+Docstring:
+Kyle's lambda proxy via OLS slope of |logret| on dollar volume (vwap*volume).
+Steps:
+  - r = diff(log(close)) in 09:30–15:59, y = |r|
+  - x = vwap * volume (to approximate dollar volume)
+  - beta = Cov(x,y) / Var(x); NaN if <8 points or Var(x)=0.
+Description attribute: OLS slope of |log returns| on dollar volume (vwap*volume) within 09:30–15:59.
+Required inputs:
+  - required_full_columns: symbol, time, close, vwap, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------

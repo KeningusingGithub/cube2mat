@@ -1,0 +1,173 @@
+Cube2mat features features starting with 'A':
+================================================================================
+Feature name: absret_center_of_mass_time
+Defined in: absret_center_of_mass_time.py (AbsRetCenterOfMassTimeFeature)
+Docstring:
+Time center-of-mass using |log return| as weights.
+Description attribute: Weighted time centroid by |log return| within RTH, normalized to [0,1].
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: absret_compaction_80pct_bars_frac
+Defined in: absret_compaction_80pct_bars_frac.py (AbsRetCompaction80PctBarsFracFeature)
+Docstring: (not provided)
+Description attribute: Fraction of RTH bars needed to accumulate 80% of Σ|r| (log-returns), sorting |r| descending.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: absret_on_sqrtn_beta
+Defined in: absret_on_sqrtn_beta.py (AbsRetOnSqrtNBetaFeature)
+Docstring:
+OLS slope of |logret| on sqrt(n) (aligned to return end bar). NaN if insufficient or var(sqrt(n))=0.
+Description attribute: Elasticity of |logret| to sqrt(n) per bar.
+Required inputs:
+  - required_full_columns: symbol, time, close, n
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: absret_peak_time_frac
+Defined in: absret_peak_time_frac.py (AbsRetPeakTimeFracFeature)
+Docstring:
+|ret| 峰值出现的“时间占比”（峰值出现的分钟 / 总分钟，∈[0,1]），ret=close.pct_change()。
+Description attribute: Fraction of session minutes when |ret| peaks.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: absret_peak_time_min
+Defined in: absret_peak_time_min.py (AbsRetPeakTimeMinFeature)
+Docstring:
+|ret| 峰值出现时间占全日交易时长的比例（自 09:30 起），ret=close.pct_change()；若无有效 ret 则 NaN。
+Description attribute: Fraction of trading session elapsed when |ret| reaches its maximum.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: absret_per_volume
+Defined in: absret_per_volume.py (AbsRetPerVolume)
+Docstring: (not provided)
+Description attribute: Σ|r| (log-returns) divided by total volume in RTH.
+Required inputs:
+  - required_full_columns: symbol, time, close, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: absret_sqrtvol_slope
+Defined in: absret_sqrtvol_slope.py (AbsRetSqrtVolSlopeFeature)
+Docstring:
+09:30–15:59 内，对每个 symbol 回归：
+  |ret_t| ~ sqrt(volume_t)
+其中 ret = close.pct_change()；过滤无效/非正 volume。输出斜率；若样本<2 或 var(sqrt(volume))=0 则 NaN。
+Description attribute: OLS slope of |ret| on sqrt(volume) within 09:30–15:59; NaN if insufficient.
+Required inputs:
+  - required_full_columns: symbol, time, close, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: ac1_absret
+Defined in: ac1_absret.py (AC1AbsRetFeature)
+Docstring:
+09:30–15:59 内，|log 收益| 的 lag-1 皮尔逊自相关；len<2 或方差为0 则 NaN。
+Description attribute: Lag-1 autocorrelation of |log returns| (volatility clustering).
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: ac1_n
+Defined in: ac1_n.py (AC1NFeature)
+Docstring:
+09:30–15:59 内，成交笔数的 lag-1 自相关。
+Description attribute: Lag-1 autocorrelation of trade counts n across intraday bars.
+Required inputs:
+  - required_full_columns: symbol, time, n
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: ac1_ret2
+Defined in: ac1_ret2.py (AC1Ret2Feature)
+Docstring:
+波动聚类刻画：log 收益平方 r^2 的 lag-1 皮尔逊自相关；len<2 或方差为 0 则 NaN。
+Description attribute: Lag-1 autocorrelation of squared log returns (volatility clustering).
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: ac1_volume
+Defined in: ac1_volume.py (AC1VolumeFeature)
+Docstring:
+09:30–15:59 内，成交量的 lag-1 皮尔逊自相关；len<2 或方差为 0 则 NaN。
+Description attribute: Lag-1 autocorrelation of volume across intraday bars.
+Required inputs:
+  - required_full_columns: symbol, time, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: ac_ret_lag2
+Defined in: ac_ret_lag2.py (ACRetLag2Feature)
+Docstring:
+Autocorrelation of intraday log returns at lag=2 within 09:30–15:59.
+Description attribute: Lag-2 autocorrelation of intraday log returns in RTH.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: accel_align_rate
+Defined in: accel_align_rate.py (AccelAlignRateFeature)
+Docstring:
+Share of bars where acceleration and velocity are aligned:
+  d1_t = Δclose_t, d2_t = Δ²close_t; align on d2 index (skip first two points);
+  value = mean( 1[(d1_{t})*d2_t > 0] ), excluding zeros. NaN if <1 valid pair.
+Description attribute: Fraction of time with curvature pushing in the velocity direction.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: accel_over_vel_std_ratio
+Defined in: accel_over_vel_std_ratio.py (AccelOverVelStdRatioFeature)
+Docstring:
+Ratio of std(Δ²close) to std(Δclose) within RTH; measures curvature vs. velocity.
+Returns NaN if insufficient data or denominator is 0.
+Description attribute: Std(second diff of close) / Std(first diff of close) in RTH.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: amihud_illiquidity
+Defined in: amihud_illiquidity.py (AmihudIlliquidityFeature)
+Docstring:
+09:30–15:59 内，Amihud 非流动性：
+  ILLIQ = mean_t( |ret_t| / (vwap_t * volume_t) )
+其中 ret = close.pct_change()；过滤无效/零或负的 vwap/volume。
+若有效样本<1，则 NaN。
+Description attribute: Amihud illiquidity: mean(|ret| / (vwap*volume)) within 09:30–15:59; NaN if insufficient data.
+Required inputs:
+  - required_full_columns: symbol, time, close, vwap, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: approx_entropy_absret_m2_r02
+Defined in: approx_entropy_absret_m2_r02.py (ApproxEntropyAbsRetM2R02)
+Docstring: (not provided)
+Description attribute: Approximate Entropy of |log returns| with m=2, r=0.2·std(|r|) within RTH.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: ar1_ret_coef
+Defined in: ar1_ret_coef.py (AR1RetCoefFeature)
+Docstring:
+09:30–15:59 内，计算 ret_t = α + φ * ret_{t-1} + ε 的 OLS φ（AR(1) 系数）。
+其中 ret = close.pct_change()，清理 inf/NaN。若有效样本对 < 3（即 ret 数≥4）或 var(ret_{t-1})=0，则 NaN。
+Description attribute: AR(1) coefficient φ for intraday simple returns ret=close.pct_change(), within 09:30–15:59.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: avg_trade_size
+Defined in: avg_trade_size.py (AvgTradeSizeFeature)
+Docstring:
+09:30–15:59 内，按 symbol 计算：
+    平均每笔成交量 = sum(volume) / sum(n)
+若当日交易笔数 sum(n) <= 0，则置为 NaN。
+输出列至少包含: ['symbol', 'value']。
+Description attribute: Average shares per trade between 09:30–15:59: sum(volume)/sum(n); NaN if no trades.
+Required inputs:
+  - required_full_columns: symbol, time, volume, n
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------

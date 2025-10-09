@@ -1,0 +1,32 @@
+Cube2mat features features starting with 'J':
+================================================================================
+Feature name: jump_count_local_k3_win21
+Defined in: jump_count_local_k3_win21.py (JumpCountLocalK3Win21Feature)
+Docstring:
+基于局部 MAD 的跳数：
+  r = diff(log(close))；sigma_local = 1.4826*MAD(|r|) 右对齐滚动窗21。
+  计数 |r_t| > k*sigma_local, k=3。有效收益 <21 或无有效 sigma → NaN。
+Description attribute: Count of |logret| > 3×local MAD scale (win=21).
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: jump_count_local_q95
+Defined in: jump_count_local_q95.py (JumpCountLocalQ95Feature)
+Docstring:
+09:30–15:59 内，|logret| 超过其 95% 分位数的跳数。
+有效收益 <10 时 NaN。
+Description attribute: Count of |logret| exceeding its 95% session quantile.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: jump_var_bns
+Defined in: jump_var_bns.py (JumpVarBNSFeature)
+Docstring:
+09:30–15:59 内，跳跃变差估计：max(RV - BPV, 0)，r_t=diff(log(close))，close>0。
+Description attribute: Jump variation proxy: max(RV - BPV, 0) with log returns.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------

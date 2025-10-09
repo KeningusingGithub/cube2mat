@@ -1,0 +1,303 @@
+Cube2mat features features starting with 'P':
+================================================================================
+Feature name: pac_ret_lag1_5
+Defined in: pac_ret_lag1_5.py (PACRetLag1to5Feature)
+Docstring:
+Partial autocorrelation of log returns at lags 1..5 via Durbin-Levinson.
+Output: index of the first significant lag in {1..5} (two-sided 95% ~ 1.96/sqrt(n)); 0 if none.
+Description attribute: First significant PACF lag (1..5) for log returns; 0 if none. Significance ~ 1.96/sqrt(n).
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: parkinson_vol
+Defined in: parkinson_vol.py (ParkinsonVolFeature)
+Docstring:
+09:30–15:59 内，汇总单日极值：H=max(high), L=min(low)，
+Parkinson 方差：sigma2 = [ln(H/L)]^2 / (4*ln(2))；波动率 = sqrt(sigma2)。
+需 H>0, L>0；若缺列或无效则 NaN。
+Description attribute: Parkinson volatility from session high/low: sqrt((ln(H/L))^2 / (4 ln 2)).
+Required inputs:
+  - required_full_columns: symbol, time, high, low
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: partial_corr_absret_volume_time
+Defined in: partial_corr_absret_volume_time.py (PartialCorrAbsRetVolumeTimeFeature)
+Docstring:
+控制线性时间趋势后，|logret| 与 volume 的偏相关。
+步骤：
+  1) r = diff(log(close)); a = |r|
+  2) t = 分钟归一化 [0,1]，与 a 对齐
+  3) 分别对 a 和 volume 回归 [1,t]，取残差后相关
+样本 <3 或任一方差=0 时 NaN。
+Description attribute: Partial corr(|logret|, volume | time) within RTH.
+Required inputs:
+  - required_full_columns: symbol, time, close, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: partial_corr_close_n_time
+Defined in: partial_corr_close_n_time.py (PartialCorrCloseNTimeFeature)
+Docstring:
+09:30–15:59 内，控制时间(分钟)后的偏相关：
+  resid_close = close ~ time 的残差
+  resid_n     = n     ~ time 的残差
+  value = corr(resid_close, resid_n)
+若无足够样本或去趋势方差为 0，则 NaN。
+Description attribute: Partial correlation between close and n controlling for time within 09:30–15:59.
+Required inputs:
+  - required_full_columns: symbol, time, close, n
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: partial_corr_close_volume_time
+Defined in: partial_corr_close_volume_time.py (PartialCorrCloseVolumeTimeFeature)
+Docstring:
+09:30–15:59 内，控制时间(分钟)后的偏相关：
+  将 close 与 volume 分别对 time(分钟)做 OLS 回归，取残差，
+  然后计算 Pearson corr(resid_close, resid_volume)。
+n<3 或去趋势方差为 0 时 NaN。
+Description attribute: Partial correlation between close and volume controlling for time within 09:30–15:59.
+Required inputs:
+  - required_full_columns: symbol, time, close, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: partial_corr_vwapdev_volume_time
+Defined in: partial_corr_vwapdev_volume_time.py (PartialCorrVWAPDevVolumeTimeFeature)
+Docstring:
+Partial correlation between |(close-vwap)/vwap| and volume, controlling for linear time.
+Steps: build a = |(close-vwap)/vwap| (aligned to bar), t∈[0,1], residualize both on [1,t], corr(resids).
+Description attribute: Partial corr(|rel VWAP deviation|, volume | time) in RTH.
+Required inputs:
+  - required_full_columns: symbol, time, close, vwap, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: path_efficiency
+Defined in: path_efficiency.py (PathEfficiencyFeature)
+Docstring:
+Path efficiency in [0,1]:
+  |last_close - first_open| / sum(|Δclose|)
+Uses first available open within RTH as anchor; NaN if <2 closes or denom<=0.
+Description attribute: Path straightness: |last_close - first_open| / sum|Δclose| in RTH.
+Required inputs:
+  - required_full_columns: symbol, time, open, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: path_length_over_range
+Defined in: path_length_over_range.py (PathLengthOverRangeFeature)
+Docstring:
+Path choppiness ratio: sum(|Δclose|) / (max(high)-min(low)) within RTH.
+NaN if <2 closes or range<=0.
+Description attribute: Sum|Δclose| normalized by session range (H-L).
+Required inputs:
+  - required_full_columns: symbol, time, high, low, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: permutation_entropy_logret_m3
+Defined in: permutation_entropy_logret_m3.py (PermutationEntropyLogRetM3)
+Docstring: (not provided)
+Description attribute: Permutation entropy (m=3) of RTH log returns, normalized to [0,1] (ordinal patterns).
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: permutation_entropy_ret
+Defined in: permutation_entropy_ret.py (PermutationEntropyRetFeature)
+Docstring:
+09:30–15:59 内 logret 的排列熵 (m=4, tau=1)，归一化至 [0,1]。
+有效收益长度 < m+1 时 NaN。
+Description attribute: Normalized permutation entropy of log returns (m=4, tau=1).
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: pos_semivar_ret
+Defined in: pos_semivar_ret.py (PosSemivarRetFeature)
+Docstring:
+09:30–15:59 内，上行半方差：sum( r_t^2 * 1{r_t>0} )，r_t=diff(log(close))，close>0。
+Description attribute: Positive semivariance of log returns.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: post_mean_close
+Defined in: post_mean_close.py (PostMeanCloseFeature)
+Docstring:
+盘后 16:00–23:59 内，按 symbol 计算 close 的均值；若该 symbol 当日无有效点，则 NaN。
+输出: ['symbol', 'value']。
+Description attribute: After-hours mean(close) between 16:00–23:59.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: post_range_hl
+Defined in: post_range_hl.py (PostRangeHLFeature)
+Docstring:
+盘后 16:00–23:59 内，按 symbol 计算 max(high) - min(low)。
+输出: ['symbol', 'value']。
+Description attribute: After-hours range: max(high) - min(low) between 16:00–23:59.
+Required inputs:
+  - required_full_columns: symbol, time, high, low
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: post_std_close
+Defined in: post_std_close.py (PostStdCloseFeature)
+Docstring:
+盘后 16:00–23:59 内，按 symbol 计算 close 的标准差；若有效点 < 3，则 NaN。
+输出: ['symbol', 'value']。
+Description attribute: After-hours std(close) between 16:00–23:59; NaN if <3 ticks.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: post_std_ret
+Defined in: post_std_ret.py (PostStdRetFeature)
+Docstring:
+盘后 16:00–23:59 内，按 symbol 计算日内简单收益率 ret=close.pct_change() 的标准差；
+若有效收益率个数 < 3，则 NaN。
+输出: ['symbol', 'value']。
+Description attribute: After-hours std of intraday returns (pct_change of close) 16:00–23:59; NaN if <3 returns.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: post_sum_n
+Defined in: post_sum_n.py (PostSumNFeature)
+Docstring:
+盘后 16:00–23:59 内，按 symbol 统计 n(number of trades) 总和。
+输出: ['symbol', 'value']。
+Description attribute: After-hours sum(n) 16:00–23:59.
+Required inputs:
+  - required_full_columns: symbol, time, n
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: post_sum_volume
+Defined in: post_sum_volume.py (PostSumVolumeFeature)
+Docstring:
+盘后 16:00–23:59 内，按 symbol 统计 volume 总和。
+输出: ['symbol', 'value']。
+Description attribute: After-hours sum(volume) 16:00–23:59.
+Required inputs:
+  - required_full_columns: symbol, time, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: post_vol_ratio_to_rth
+Defined in: post_vol_ratio_to_rth.py (PostVolRatioToRTHFeature)
+Docstring:
+Ratio of post-market total volume to RTH total volume:
+  Post: 16:00–23:59; RTH: 09:30–15:59.
+NaN if RTH volume<=0.
+Description attribute: Post-market volume / RTH volume ratio for the day.
+Required inputs:
+  - required_full_columns: symbol, time, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: pre_mean_close
+Defined in: pre_mean_close.py (PreMeanCloseFeature)
+Docstring:
+盘前 00:00–09:29 内，按 symbol 计算 close 的均值；若该 symbol 当日无有效点，则 NaN。
+输出: ['symbol', 'value']。
+Description attribute: Pre-market mean(close) between 00:00–09:29.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: pre_range_hl
+Defined in: pre_range_hl.py (PreRangeHLFeature)
+Docstring:
+盘前 00:00–09:29 内，按 symbol 计算 max(high) - min(low)。
+输出: ['symbol', 'value']。
+Description attribute: Pre-market range: max(high) - min(low) between 00:00–09:29.
+Required inputs:
+  - required_full_columns: symbol, time, high, low
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: pre_std_close
+Defined in: pre_std_close.py (PreStdCloseFeature)
+Docstring:
+盘前 00:00–09:29 内，按 symbol 计算 close 的标准差；若有效点 < 3，则 NaN。
+输出: ['symbol', 'value']。
+Description attribute: Pre-market std(close) between 00:00–09:29; NaN if <3 ticks.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: pre_std_ret
+Defined in: pre_std_ret.py (PreStdRetFeature)
+Docstring:
+盘前 00:00–09:29 内，按 symbol 计算日内简单收益率 ret=close.pct_change() 的标准差；
+若有效收益率个数 < 3，则 NaN。
+输出: ['symbol', 'value']。
+Description attribute: Pre-market std of intraday returns (pct_change of close) 00:00–09:29; NaN if <3 returns.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: pre_sum_n
+Defined in: pre_sum_n.py (PreSumNFeature)
+Docstring:
+盘前 00:00–09:29 内，按 symbol 统计 n(number of trades) 总和。
+输出: ['symbol', 'value']。
+Description attribute: Pre-market sum(n) 00:00–09:29.
+Required inputs:
+  - required_full_columns: symbol, time, n
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: pre_sum_volume
+Defined in: pre_sum_volume.py (PreSumVolumeFeature)
+Docstring:
+盘前 00:00–09:29 内，按 symbol 统计 volume 总和。
+输出: ['symbol', 'value']。
+Description attribute: Pre-market sum(volume) 00:00–09:29.
+Required inputs:
+  - required_full_columns: symbol, time, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: premium_close_vwap_up_minus_down
+Defined in: premium_close_vwap_up_minus_down.py (PremiumCloseVWAPUpMinusDownFeature)
+Docstring:
+(close - vwap) 在上涨/下跌状态的均值之差：
+  diff = mean(close-vwap | ret>0) - mean(close-vwap | ret<0)
+任一侧样本为空则 NaN。
+Description attribute: Mean(close-vwap|up) minus mean(close-vwap|down).
+Required inputs:
+  - required_full_columns: symbol, time, close, vwap
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: premkt_gap_fill_ratio
+Defined in: premkt_gap_fill_ratio.py (PreMktGapFillRatio)
+Docstring: (not provided)
+Description attribute: Gap-fill ratio vs premarket: -(close_RTH_last - open_RTH_first) / (open_RTH_first - premarket_last_close). 1=完全回补，>1=过度回补。
+Required inputs:
+  - required_full_columns: symbol, time, open, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: premkt_to_rth_ret_corr
+Defined in: premkt_to_rth_ret_corr.py (PremktToRTHRetCorrFeature)
+Docstring:
+Approximate linkage between pre-market and RTH returns (single-day proxy):
+  value = sign(sum_pre_logret) * sign(sum_rth_logret)
+in {-1, 0, +1}; NaN if either segment lacks >=1 return.
+  Pre: 00:00–09:29; RTH: 09:30–15:59.
+Description attribute: Sign consistency proxy between pre-market and RTH total log returns.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: premkt_vol_ratio_to_rth
+Defined in: premkt_vol_ratio_to_rth.py (PremktVolRatioToRTHFeature)
+Docstring:
+Ratio of pre-market total volume to RTH total volume:
+  Pre: 00:00–09:29; RTH: 09:30–15:59.
+NaN if RTH volume<=0.
+Description attribute: Pre-market volume / RTH volume ratio for the day.
+Required inputs:
+  - required_full_columns: symbol, time, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: price_above_median_share
+Defined in: price_above_median_share.py (PriceAboveMedianShare)
+Docstring: (not provided)
+Description attribute: Share of RTH bars with close strictly above the RTH median close.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------

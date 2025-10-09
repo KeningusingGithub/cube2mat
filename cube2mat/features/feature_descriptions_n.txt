@@ -1,0 +1,189 @@
+Cube2mat features features starting with 'N':
+================================================================================
+Feature name: n_burstiness
+Defined in: n_burstiness.py (NBurstinessFeature)
+Docstring:
+09:30–15:59 内，成交笔数的 Burstiness 指数：
+  B = (sigma - mu) / (sigma + mu)，mu>0 且 sigma>0 才有效；范围(-1,1)。
+Description attribute: Burstiness of trade counts n across intraday bars: (std-mean)/(std+mean).
+Required inputs:
+  - required_full_columns: symbol, time, n
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: n_entropy_concentration
+Defined in: n_entropy_concentration.py (NEntropyConcentrationFeature)
+Docstring:
+Concentration of trade counts via 1 - normalized Shannon entropy.
+Steps:
+  - p_i = n_i / sum(n_i), keep p_i>0
+  - H = -sum p_i*log(p_i); Hmax=log(m) where m=len(p_i)
+  - value = 1 - H/Hmax in [0,1]; NaN if sum(n)<=0 or m<2
+Description attribute: 1 - normalized entropy of n distribution across RTH bars (09:30–15:59).
+Required inputs:
+  - required_full_columns: symbol, time, n
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: n_fano_factor
+Defined in: n_fano_factor.py (NFanoFactorFeature)
+Docstring:
+09:30–15:59 内，成交笔数的 Fano 因子：var(n) / mean(n)；mean>0 才有效。
+衡量过离散/聚集程度（泊松过程下约等于 1）。
+Description attribute: Fano factor of n across intraday bars: Var(n)/Mean(n).
+Required inputs:
+  - required_full_columns: symbol, time, n
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: n_front_loading_score
+Defined in: n_front_loading_score.py (NFrontLoadingScoreFeature)
+Docstring:
+Front-loading score for trade counts (n):
+  - time fraction x in [0,1] from 09:30
+  - cumN fraction y = cumsum(n)/sum(n)
+  - score = 2 * AUC(y over x) - 1, in [-1,1]; >0 means front-loaded.
+  NaN if sum(n)<=0 or <3 points.
+Description attribute: 2*AUC(cumN vs time fraction)-1 for n in 09:30–15:59; NaN if no trades.
+Required inputs:
+  - required_full_columns: symbol, time, n
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: n_gini
+Defined in: n_gini.py (NGiniFeature)
+Docstring:
+Gini index for distribution of n across intraday bars (09:30–15:59).
+Use standard discrete Gini on nonnegative values; NaN if sum<=0 or <2 bars.
+Description attribute: Gini index of trade count distribution across RTH bars.
+Required inputs:
+  - required_full_columns: symbol, time, n
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: n_hhi
+Defined in: n_hhi.py (NHhIFeature)
+Docstring:
+09:30–15:59 内，成交笔数分布 HHI：sum_i ( (n_i / sum n)^2 )。
+Description attribute: Herfindahl index of trade count (n) distribution across intraday bars.
+Required inputs:
+  - required_full_columns: symbol, time, n
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: n_peak_time_frac
+Defined in: n_peak_time_frac.py (NPeakTimeFracFeature)
+Docstring:
+Fractional position (0..1) of the maximum n bar within the RTH sequence.
+Uses rank index (bar position), robust to irregular timestamps. NaN if <2 bars or max<=0.
+Description attribute: Fractional bar-position when per-bar n peaks within 09:30–15:59.
+Required inputs:
+  - required_full_columns: symbol, time, n
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: n_peak_time_min
+Defined in: n_peak_time_min.py (NPeakTimeMinFeature)
+Docstring:
+Fraction of trading session elapsed when per-bar n reaches its maximum.
+Uses minutes from 09:30; result in [0,1]; NaN if all n<=0 or empty.
+Description attribute: Fraction of session elapsed (by minutes) when per-bar n peaks within 09:30–15:59.
+Required inputs:
+  - required_full_columns: symbol, time, n
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: near_close_ramp_slope_10m
+Defined in: near_close_ramp_slope_10m.py (NearCloseRampSlope10mFeature)
+Docstring:
+OLS slope of close on minutes since 15:50 within 15:50–15:59 window.
+NaN if <2 points or var(time)=0.
+Description attribute: Tail 10-minute linear slope of close vs time.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: near_high_time_share_10bp
+Defined in: near_high_time_share_10bp.py (NearHighTimeShare10bpFeature)
+Docstring:
+Share of bars where close is within 10 bp of the session HIGH.
+Description attribute: Fraction of bars with close near session HIGH within 10bp.
+Required inputs:
+  - required_full_columns: symbol, time, close, high
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: near_low_time_share_10bp
+Defined in: near_low_time_share_10bp.py (NearLowTimeShare10bpFeature)
+Docstring:
+Share of bars where close is within 10 bp of the session LOW.
+Description attribute: Fraction of bars with close near session LOW within 10bp.
+Required inputs:
+  - required_full_columns: symbol, time, close, low
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: neg_semivar_ret
+Defined in: neg_semivar_ret.py (NegSemivarRetFeature)
+Docstring:
+09:30–15:59 内，下行半方差：sum( r_t^2 * 1{r_t<0} )，r_t=diff(log(close))，close>0。
+Description attribute: Negative semivariance of log returns.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: new_high_count
+Defined in: new_high_count.py (NewHighCountFeature)
+Docstring:
+Count of times a new session HIGH is set in 09:30–15:59.
+Description attribute: Number of new intraday highs within 09:30–15:59.
+Required inputs:
+  - required_full_columns: symbol, time, high
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: new_low_count
+Defined in: new_low_count.py (NewLowCountFeature)
+Docstring:
+Count of times a new session LOW is set in 09:30–15:59.
+Description attribute: Number of new intraday lows within 09:30–15:59.
+Required inputs:
+  - required_full_columns: symbol, time, low
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: next3_absret_highvol_minus_lowvol
+Defined in: next3_absret_highvol_minus_lowvol.py (Next3AbsRetHighVolMinusLowVol)
+Docstring: (not provided)
+Description attribute: E[Σ_{i=1..3}|r_{t+i}| | vol_t≥Q90] − E[Σ_{i=1..3}|r_{t+i}| | vol_t≤Q10], within RTH.
+Required inputs:
+  - required_full_columns: symbol, time, close, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: next_absret_after_top_vol_decile
+Defined in: next_absret_after_top_vol_decile.py (NextAbsRetAfterTopVolDecileFeature)
+Docstring:
+Mean of |logret_{t+1}| conditional on volume_t in top 10% within RTH.
+NaN if <3 events.
+Description attribute: E[|logret_{t+1}| | volume_t in top decile].
+Required inputs:
+  - required_full_columns: symbol, time, close, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: next_ret_after_top_absret_decile
+Defined in: next_ret_after_top_absret_decile.py (NextRetAfterTopAbsRetDecileFeature)
+Docstring:
+Mean of next simple return conditional on current |logret| in top 10% within RTH.
+NaN if <3 events.
+Description attribute: E[ret_{t+1} | |logret_t| in top decile].
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: next_ret_cond_down
+Defined in: next_ret_cond_down.py (NextRetCondDownFeature)
+Docstring:
+条件期望：E[ret_{t+1} | ret_t < 0]；触发样本<3 则 NaN。
+Description attribute: Mean of next simple return conditional on current ret<0.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: next_ret_cond_up
+Defined in: next_ret_cond_up.py (NextRetCondUpFeature)
+Docstring:
+条件期望：E[ret_{t+1} | ret_t > 0]。
+用 simple return，过滤 inf/NaN；触发样本<3 则 NaN。
+Description attribute: Mean of next simple return conditional on current ret>0.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------

@@ -1,0 +1,20 @@
+Cube2mat features features starting with 'H':
+================================================================================
+Feature name: higuchi_fd_logret_kmax7
+Defined in: higuchi_fd_logret_kmax7.py (HiguchiFDLogRetKmax7)
+Docstring: (not provided)
+Description attribute: Higuchi fractal dimension estimate of log returns (k_max=7) within RTH.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: hurst_rs_ret
+Defined in: hurst_rs_ret.py (HurstRSRetFeature)
+Docstring:
+Hurst exponent via R/S analysis on intraday log returns in RTH.
+Uses block sizes {5,10,20,40,80,160} as available; OLS slope of log(R/S)~log(m).
+Description attribute: R/S Hurst exponent estimated from intraday log returns.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------

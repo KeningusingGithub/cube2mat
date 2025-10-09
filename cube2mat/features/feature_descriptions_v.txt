@@ -1,0 +1,381 @@
+Cube2mat features features starting with 'V':
+================================================================================
+Feature name: var_conc_top_decile
+Defined in: var_conc_top_decile.py (VarConcTopDecileFeature)
+Docstring:
+方差贡献集中度（Top 10%）：RV_top10 / RV_total，其中
+  RV_total = sum(r^2)，r=diff(log(close))；
+  RV_top10 = 对 r^2 的 90% 分位数阈值以上部分的总和。
+分母<=0 或有效 r<2 则 NaN。
+Description attribute: Share of realized variance contributed by the top 10% largest r^2.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: variance_ratio_q10
+Defined in: variance_ratio_q10.py (VarianceRatioQ10Feature)
+Docstring:
+Variance Ratio with horizon q=10 on intraday log returns, 09:30–15:59.
+Description attribute: Variance Ratio of intraday log returns with q=10 in 09:30–15:59.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: variance_ratio_q2
+Defined in: variance_ratio_q2.py (VarianceRatioQ2Feature)
+Docstring:
+Variance Ratio with horizon q=2 on intraday log returns within 09:30–15:59.
+
+VR(q) = Var(sum_{i=0..q-1} r_{t+i}) / (q * Var(r_t)); NaN if insufficient or Var(r_t)=0.
+Description attribute: Variance Ratio of intraday log returns with q=2 in 09:30–15:59.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: variance_ratio_q5
+Defined in: variance_ratio_q5.py (VarianceRatioQ5Feature)
+Docstring:
+Variance Ratio with horizon q=5 on intraday log returns within 09:30–15:59.
+VR(q) = Var(Σ_{i=0..q-1} r_{t+i}) / (q * Var(r_t))
+NaN if insufficient (<q+2 returns) or denominator=0.
+Description attribute: Variance Ratio of intraday log returns with q=5 between 09:30–15:59.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: vol_of_vol_absret
+Defined in: vol_of_vol_absret.py (VolOfVolAbsRetFeature)
+Docstring:
+Vol-of-Vol proxy using absolute log returns:
+  1) r = diff(log(close)), a = |r|
+  2) compute std of Δa = a - a.shift(1), unbiased (ddof=1)
+  NaN if <3 valid Δa.
+Description attribute: Std of first differences of |log returns| within 09:30–15:59; NaN if <3 valid diffs.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: volume_center_of_mass_time
+Defined in: volume_center_of_mass_time.py (VolumeCenterOfMassTimeFeature)
+Docstring:
+Time center-of-mass (in [0,1]) using volume as weights.
+Description attribute: Weighted time centroid by volume in RTH, normalized to [0,1].
+Required inputs:
+  - required_full_columns: symbol, time, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: volume_compaction_80pct_bars_frac
+Defined in: volume_compaction_80pct_bars_frac.py (VolumeCompaction80PctBarsFracFeature)
+Docstring: (not provided)
+Description attribute: Fraction of RTH bars needed to accumulate 80% of total volume (bars sorted by volume descending).
+Required inputs:
+  - required_full_columns: symbol, time, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: volume_entropy
+Defined in: volume_entropy.py (VolumeEntropyFeature)
+Docstring:
+Normalized Shannon entropy H/Hmax of volume distribution across RTH bars, in [0,1].
+p_i = v_i/sum(v); H = -sum p_i log p_i; Hmax=log(m). NaN if sum<=0 or m<2.
+Description attribute: Normalized entropy of per-bar volume distribution (RTH).
+Required inputs:
+  - required_full_columns: symbol, time, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: volume_entropy_concentration
+Defined in: volume_entropy_concentration.py (VolumeEntropyConcentrationFeature)
+Docstring:
+09:30–15:59 内，成交量的“1-归一化熵”：
+  p_i = vol_i / sum vol；H = -sum p_i log p_i；H_norm = H / log(N)；value = 1 - H_norm。
+越接近 1 表示越集中；若 sum(vol)<=0 或 N<2，则 NaN。
+Description attribute: 1 - normalized Shannon entropy of volume distribution across intraday bars.
+Required inputs:
+  - required_full_columns: symbol, time, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: volume_front_loading_score
+Defined in: volume_front_loading_score.py (VolumeFrontLoadingScoreFeature)
+Docstring:
+前置/后置成交量偏移得分（-1~+1）：
+  以时间归一化 tau∈[0,1] 与累积量份额 c(tau) 构成曲线，计算 AUC = ∫ c d tau（梯形法），
+  score = 2*AUC - 1。>0 前置（早段更快累积），<0 后置。
+若 sum(vol)<=0 或样本<2，则 NaN。
+Description attribute: 2*AUC(cumVolFraction vs timeFraction) - 1; positive=front-loaded.
+Required inputs:
+  - required_full_columns: symbol, time, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: volume_gini
+Defined in: volume_gini.py (VolumeGiniFeature)
+Docstring:
+Gini index of volume distribution across RTH bars.
+Description attribute: Gini of per-bar volume distribution in RTH.
+Required inputs:
+  - required_full_columns: symbol, time, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: volume_hhi
+Defined in: volume_hhi.py (VolumeHHIFeature)
+Docstring:
+09:30–15:59 内，成交量 HHI = sum_i ( (vol_i / sum_j vol_j)^2 )；衡量量在时间上的集中度。
+若 sum(vol)<=0 或无有效样本，NaN。
+Description attribute: Herfindahl index of volume distribution across intraday bars.
+Required inputs:
+  - required_full_columns: symbol, time, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: volume_median_to_mean_ratio
+Defined in: volume_median_to_mean_ratio.py (VolumeMedianToMeanRatio)
+Docstring: (not provided)
+Description attribute: Median(volume)/Mean(volume) within RTH; concentration/robustness proxy for volume distribution.
+Required inputs:
+  - required_full_columns: symbol, time, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: volume_peak_time_frac
+Defined in: volume_peak_time_frac.py (VolumePeakTimeFracFeature)
+Docstring:
+成交量峰值出现的“时间占比”（峰值出现的分钟 / 总分钟，∈[0,1]）。
+Description attribute: Fraction of session minutes when the per-bar max volume occurs.
+Required inputs:
+  - required_full_columns: symbol, time, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: volume_peak_time_min
+Defined in: volume_peak_time_min.py (VolumePeakTimeMinFeature)
+Docstring:
+成交量峰值出现时间占全日交易时长的比例（自 09:30 起）。若无有效 volume 则 NaN。
+Description attribute: Fraction of trading session elapsed when maximum per-bar volume occurs.
+Required inputs:
+  - required_full_columns: symbol, time, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: volume_return_cokurtosis22
+Defined in: volume_return_cokurtosis22.py (VolumeReturnCoKurtosis22)
+Docstring: (not provided)
+Description attribute: Co-kurtosis(2,2): E[(V-μV)^2 (R-μR)^2] / (σV^2 σR^2) for volume and log returns in RTH.
+Required inputs:
+  - required_full_columns: symbol, time, close, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: volume_return_coskewness
+Defined in: volume_return_coskewness.py (VolumeReturnCoSkewness)
+Docstring: (not provided)
+Description attribute: Co-skewness E[(V-μV)^2 (R-μR)] / (σV^2 σR) between volume and log returns in RTH.
+Required inputs:
+  - required_full_columns: symbol, time, close, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: volume_share_on_down
+Defined in: volume_share_on_down.py (VolumeShareOnDownFeature)
+Docstring:
+下跌状态的成交量占比： sum(volume|ret<0) / sum(volume_all)。
+Description attribute: Share of total volume that occurs on down bars.
+Required inputs:
+  - required_full_columns: symbol, time, close, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: volume_share_on_up
+Defined in: volume_share_on_up.py (VolumeShareOnUpFeature)
+Docstring:
+上涨状态的成交量占比： sum(volume|ret>0) / sum(volume_all)。
+若总量<=0 则 NaN。
+Description attribute: Share of total volume that occurs on up bars.
+Required inputs:
+  - required_full_columns: symbol, time, close, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: volume_skew
+Defined in: volume_skew.py (VolumeSkewFeature)
+Docstring:
+Sample skewness of per-bar volume within RTH:
+  g1 = m3 / s^3 (Fisher). NaN if <3 bars or s==0.
+Description attribute: Skewness of volume distribution across RTH bars.
+Required inputs:
+  - required_full_columns: symbol, time, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: volume_top3_share
+Defined in: volume_top3_share.py (VolumeTop3ShareFeature)
+Docstring: (not provided)
+Description attribute: Share of total RTH volume contributed by the top-3 volume bars.
+Required inputs:
+  - required_full_columns: symbol, time, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: volume_up_down_logratio
+Defined in: volume_up_down_logratio.py (VolumeUpDownLogRatioFeature)
+Docstring:
+上/下成交量的对数比： log( (sum vol|ret>0 + eps) / (sum vol|ret<0 + eps) )。
+eps=1e-12 防零除。
+Description attribute: Log-ratio of volumes on up vs down bars.
+Required inputs:
+  - required_full_columns: symbol, time, close, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: volume_weighted_simple_return
+Defined in: volume_weighted_simple_return.py (VolumeWeightedSimpleReturn)
+Docstring: (not provided)
+Description attribute: Volume-weighted mean of simple returns within RTH: Σ(v_t * (close_t/close_{t-1} - 1))/Σ v_t.
+Required inputs:
+  - required_full_columns: symbol, time, close, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: vw_mean_absret_logret
+Defined in: vw_mean_absret_logret.py (VWMeanAbsRetLogretFeature)
+Docstring:
+Volume-weighted mean of |log returns| in RTH:
+  r = diff(log close); use weights w_t = volume_t aligned to r (end time).
+  value = sum w*|r| / sum w. NaN if sum w<=0 or <1 return.
+Description attribute: Volume-weighted mean absolute log return.
+Required inputs:
+  - required_full_columns: symbol, time, close, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: vwap_avg_run_length_above
+Defined in: vwap_avg_run_length_above.py (VWAPAvgRunLengthAboveFeature)
+Docstring:
+Mean run length (in bars) where close > vwap within RTH.
+Returns NaN if no positive runs.
+Description attribute: Average length of contiguous runs with close>vwap in RTH.
+Required inputs:
+  - required_full_columns: symbol, time, close, vwap
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: vwap_cross_count
+Defined in: vwap_cross_count.py (VWAPCrossCountFeature)
+Docstring:
+Count sign changes of (close - vwap) within 09:30–15:59, ignoring zeros.
+Crossing counted when consecutive non-zero signs differ. NaN if <2 non-zero points.
+Description attribute: Count of sign flips of (close - vwap) during RTH; ignore zeros.
+Required inputs:
+  - required_full_columns: symbol, time, close, vwap
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: vwap_cross_down_nextret
+Defined in: vwap_cross_down_nextret.py (VWAPCrossDownNextRetFeature)
+Docstring:
+Mean next simple return conditional on downward crossing:
+event when (close - vwap) turns from >= 0 to < 0.
+Returns NaN if fewer than 3 events.
+Description attribute: Mean next ret after downward VWAP crossing in RTH.
+Required inputs:
+  - required_full_columns: symbol, time, close, vwap
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: vwap_cross_spacing_mean
+Defined in: vwap_cross_spacing_mean.py (VWAPCrossSpacingMeanFeature)
+Docstring:
+Mean time spacing (in fraction of session minutes) between consecutive crossings of (close - vwap).
+Steps:
+  - consider only non-zero sign points
+  - crossing timestamps where sign changes
+  - spacing = mean(minute gaps)/389; NaN if <2 crossings
+Description attribute: Mean spacing between VWAP crossings as fraction of 389 minutes; NaN if <2 crossings.
+Required inputs:
+  - required_full_columns: symbol, time, close, vwap
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: vwap_cross_up_nextret
+Defined in: vwap_cross_up_nextret.py (VWAPCrossUpNextRetFeature)
+Docstring:
+Mean next simple return conditional on upward crossing:
+event when (close - vwap) turns from <= 0 to > 0.
+Next ret = pct_change(close).shift(-1). Returns NaN if fewer than 3 events.
+Description attribute: Mean next ret after upward VWAP crossing in RTH.
+Required inputs:
+  - required_full_columns: symbol, time, close, vwap
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: vwap_dev_ar1_halflife_bars
+Defined in: vwap_dev_ar1_halflife_bars.py (VWAPDevAR1HalfLifeBarsFeature)
+Docstring:
+Half-life (in bars) of deviation d_t = close - vwap under AR(1):
+  d_t = c + phi * d_{t-1} + e.
+Half-life = -ln(2)/ln(phi) if 0 < phi < 1; otherwise NaN.
+Description attribute: AR(1) half-life of (close - vwap) deviation in RTH (bars).
+Required inputs:
+  - required_full_columns: symbol, time, close, vwap
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: vwap_dev_ar1_phi
+Defined in: vwap_dev_ar1_phi.py (VWAPDevAR1PhiFeature)
+Docstring:
+AR(1) coefficient phi of deviation d_t = close - vwap in RTH:
+  d_t = c + phi*d_{t-1} + e. NaN if var(d_{t-1})=0 or insufficient.
+Description attribute: AR(1) phi of (close - vwap) deviation.
+Required inputs:
+  - required_full_columns: symbol, time, close, vwap
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: vwap_dev_bps_time_share_10bp
+Defined in: vwap_dev_bps_time_share_10bp.py (VWAPDevBPSTimeShare10bpFeature)
+Docstring:
+Fraction of bars with |close - vwap| / vwap >= 10bp (0.001) within RTH.
+Description attribute: Time share with |close-vwap|/vwap >= 10bp.
+Required inputs:
+  - required_full_columns: symbol, time, close, vwap
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: vwap_dev_rel_median_abs
+Defined in: vwap_dev_rel_median_abs.py (VWAPDevRelMedianAbs)
+Docstring: (not provided)
+Description attribute: Median of |(close - vwap)/vwap| across RTH bars (robust VWAP deviation scale).
+Required inputs:
+  - required_full_columns: symbol, time, close, vwap
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: vwap_gap_tail_share_q75
+Defined in: vwap_gap_tail_share_q75.py (VWAPGapTailShareQ75Feature)
+Docstring:
+Tail-share of |close - vwap| above its 75th percentile within 09:30–15:59.
+NaN if <3 valid bars.
+Description attribute: Share of bars where |close - vwap| exceeds its 75th percentile during RTH; NaN if <3 bars.
+Required inputs:
+  - required_full_columns: symbol, time, close, vwap
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: vwap_position_in_range
+Defined in: vwap_position_in_range.py (VWAPPositionInRange)
+Docstring: (not provided)
+Description attribute: Position of session VWAP in the day's H-L range: (VWAP - L)/(H - L).
+Required inputs:
+  - required_full_columns: symbol, time, high, low, vwap, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: vwap_twap_diff
+Defined in: vwap_twap_diff.py (VWAPTWAPDiffFeature)
+Docstring:
+Session VWAP minus TWAP within 09:30–15:59:
+  - TWAP = mean(close)
+  - VWAP = sum(close*volume)/sum(volume)
+  value = VWAP - TWAP; NaN if sum(volume)<=0 or <3 ticks.
+Description attribute: VWAP - TWAP (mean(close)) within 09:30–15:59; NaN if insufficient.
+Required inputs:
+  - required_full_columns: symbol, time, close, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: vwap_twap_gap_rel
+Defined in: vwap_twap_gap_rel.py (VWAPTWAPGapRelFeature)
+Docstring:
+Session VWAP vs TWAP relative gap:
+  vwap_sess = sum(vwap_i * vol_i)/sum(vol_i); twap = mean(close);
+  value = (vwap_sess - twap) / twap.
+NaN if twap<=0 or sum(vol)<=0.
+Description attribute: Relative gap between session VWAP and TWAP (mean close).
+Required inputs:
+  - required_full_columns: symbol, time, close, vwap, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: vwap_zscore_close_end
+Defined in: vwap_zscore_close_end.py (VWAPZScoreCloseEndFeature)
+Docstring:
+Z-score of last close vs session VWAP:
+  z = (last_close - VWAP_session) / std(close - vwap)
+VWAP_session = sum(close*volume)/sum(volume) (not per-bar vwap).
+NaN if std==0 or <3 bars or sum(volume)<=0.
+Description attribute: Z-score of last close vs session VWAP using std(close - vwap) as scale; RTH only.
+Required inputs:
+  - required_full_columns: symbol, time, close, vwap, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------

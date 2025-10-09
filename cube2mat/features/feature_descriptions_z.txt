@@ -1,0 +1,12 @@
+Cube2mat features features starting with 'Z':
+================================================================================
+Feature name: zero_ret_share
+Defined in: zero_ret_share.py (ZeroRetShareFeature)
+Docstring:
+Share of bars with simple return close.pct_change()==0 (within epsilon).
+epsilon default=1e-10; NaN if <1 return.
+Description attribute: Fraction of bars with near-zero simple returns (|ret|<=1e-10) in RTH.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------

@@ -1,0 +1,272 @@
+Cube2mat features features starting with 'C':
+================================================================================
+Feature name: candle_body_to_range_mean
+Defined in: candle_body_to_range_mean.py (CandleBodyToRangeMean)
+Docstring: (not provided)
+Description attribute: Mean of |close-open|/(high-low) across RTH bars (exclude zero-range bars).
+Required inputs:
+  - required_full_columns: symbol, time, open, high, low, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: close_15m_absret_share
+Defined in: close_15m_absret_share.py (Close15mAbsRetShareFeature)
+Docstring:
+09:30–15:59 内，收盘 15 分钟的绝对收益贡献占比。
+Description attribute: Share of absolute returns in last 15 minutes; ret by close.pct_change.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: close_15m_volume_share
+Defined in: close_15m_volume_share.py (Close15mVolumeShareFeature)
+Docstring:
+09:30–15:59 内，收盘前 15 分钟 (t_min >= total_minutes-15) 的成交量占比。
+若全日有效 volume 总和<=0，则 NaN。
+Description attribute: Share of volume in last 15 minutes.
+Required inputs:
+  - required_full_columns: symbol, time, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: close_on_logn_beta
+Defined in: close_on_logn_beta.py (CloseOnLogNBetaFeature)
+Docstring:
+09:30–15:59 内，OLS: close ~ log(n)。仅使用 n>0 的样本。
+若有效样本<2 或 var(log(n))=0，则 NaN。
+Description attribute: OLS slope of close on log(n) within 09:30–15:59; NaN if insufficient.
+Required inputs:
+  - required_full_columns: symbol, time, close, n
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: close_on_logvolume_beta
+Defined in: close_on_logvolume_beta.py (CloseOnLogVolumeBetaFeature)
+Docstring:
+09:30–15:59 内，OLS: close ~ log(volume)。仅使用 volume>0 的样本。
+若有效样本<2 或 var(log(volume))=0，则 NaN。
+Description attribute: OLS slope of close on log(volume) within 09:30–15:59; NaN if insufficient.
+Required inputs:
+  - required_full_columns: symbol, time, close, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: close_on_n_beta
+Defined in: close_on_n_beta.py (CloseOnNBetaFeature)
+Docstring:
+09:30–15:59 内，OLS: close ~ n（成交笔数）。样本<2 或 var(n)=0 则 NaN。
+Description attribute: OLS slope of close on number of trades n within 09:30–15:59.
+Required inputs:
+  - required_full_columns: symbol, time, close, n
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: close_on_volume_beta
+Defined in: close_on_volume_beta.py (CloseOnVolumeBetaFeature)
+Docstring:
+09:30–15:59 内，按 symbol 做 OLS: close ~ volume，输出斜率（价格/股）。
+若有效样本<2 或 var(volume)=0，则 NaN。
+Description attribute: OLS slope of close on volume within 09:30–15:59; NaN if insufficient or var(volume)=0.
+Required inputs:
+  - required_full_columns: symbol, time, close, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: close_on_vwap_beta
+Defined in: close_on_vwap_beta.py (CloseOnVwapBetaFeature)
+Docstring:
+09:30–15:59 内，回归 close ~ vwap，输出斜率（beta）。
+用于刻画 close 对“交易加权锚(vwap)”的弹性；若样本<2 或 var(vwap)=0，则 NaN。
+Description attribute: OLS slope (beta) of close on vwap within 09:30–15:59; NaN if insufficient.
+Required inputs:
+  - required_full_columns: symbol, time, close, vwap
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: close_to_edge_distance_frac
+Defined in: close_to_edge_distance_frac.py (CloseToEdgeDistanceFrac)
+Docstring: (not provided)
+Description attribute: Normalized edge proximity: min(C-L, H-C)/(H-L) using RTH H/L and last close.
+Required inputs:
+  - required_full_columns: symbol, time, high, low, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: close_to_open_ret
+Defined in: close_to_open_ret.py (CloseToOpenRetFeature)
+Docstring:
+Session close-to-open simple return (reverse anchor within same RTH):
+  value = first_open / last_close - 1; NaN if missing or last_close<=0.
+Description attribute: Simple return from last close back to first open within same RTH.
+Required inputs:
+  - required_full_columns: symbol, time, open, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: clv_session
+Defined in: clv_session.py (CLVSessionFeature)
+Docstring:
+Close Location Value over session range:
+  CLV = ((last_close - L) - (H - last_close)) / (H - L), H=max(high), L=min(low)
+NaN if (H-L)<=0 or no bars.
+Description attribute: Session Close Location Value in RTH using session H/L and last close.
+Required inputs:
+  - required_full_columns: symbol, time, high, low, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: cond_diff_next_ret_up_minus_down
+Defined in: cond_diff_next_ret_up_minus_down.py (CondDiffNextRetUpMinusDownFeature)
+Docstring:
+条件差：E[ret_{t+1}|ret_t>0] - E[ret_{t+1}|ret_t<0]。
+两侧触发样本均需≥3，否则 NaN。
+Description attribute: Difference between next-return means after up vs down bars.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: cond_reversal_after_run2
+Defined in: cond_reversal_after_run2.py (CondReversalAfterRun2Feature)
+Docstring:
+Probability of reversal after a 2-length run:
+  events at t where sign(ret_{t-1})==sign(ret_t)!=0; outcome = 1[sign(ret_{t+1}) != sign(ret_t) and sign!=0].
+value = mean(outcome | events). NaN if <3 events.
+Description attribute: P(reversal | two consecutive same-sign simple returns).
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: corr_absret_n
+Defined in: corr_absret_n.py (CorrAbsRetNFeature)
+Docstring:
+|log 收益| 与成交笔数 n 的皮尔逊相关：corr(|r|, n)。
+Description attribute: Pearson correlation between |log returns| and trade count n.
+Required inputs:
+  - required_full_columns: symbol, time, close, n
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: corr_absret_volume
+Defined in: corr_absret_volume.py (CorrAbsRetVolumeFeature)
+Docstring:
+|log 收益| 与成交量的皮尔逊相关：corr(|r|, volume)。
+对齐为“收益时刻”的体量（即差分后的后一个 bar 的 volume）。
+样本<2 或方差为 0 则 NaN。
+Description attribute: Pearson correlation between |log returns| and volume within session.
+Required inputs:
+  - required_full_columns: symbol, time, close, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: corr_close_n
+Defined in: corr_close_n.py (CorrCloseNFeature)
+Docstring:
+09:30–15:59 内，Pearson 相关：corr(close, n)。
+若样本<2 或方差为 0，则 NaN。
+Description attribute: Pearson correlation between close and n within 09:30–15:59.
+Required inputs:
+  - required_full_columns: symbol, time, close, n
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: corr_close_volume
+Defined in: corr_close_volume.py (CorrCloseVolumeFeature)
+Docstring:
+09:30–15:59 内，Pearson 相关：corr(close, volume)。
+若样本<2 或方差为 0，则 NaN。
+Description attribute: Pearson correlation between close and volume within 09:30–15:59.
+Required inputs:
+  - required_full_columns: symbol, time, close, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: corr_close_vwap
+Defined in: corr_close_vwap.py (CorrCloseVWAPFeature)
+Docstring:
+09:30–15:59 内，close 与 vwap 的 Pearson 相关。
+样本 <3 或任一方差为 0 时 NaN。
+Description attribute: Correlation of close and vwap within RTH.
+Required inputs:
+  - required_full_columns: symbol, time, close, vwap
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: corr_ret2_volume
+Defined in: corr_ret2_volume.py (CorrRet2VolumeFeature)
+Docstring:
+r^2 与 volume 的皮尔逊相关：corr(r_t^2, volume_t)，衡量量与瞬时方差的联动。
+Description attribute: Pearson correlation between squared log returns and volume.
+Required inputs:
+  - required_full_columns: symbol, time, close, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: corr_ret_absnextret
+Defined in: corr_ret_absnextret.py (CorrRetAbsNextRetFeature)
+Docstring:
+Pearson corr between simple ret_t and |simple ret_{t+1}| in RTH.
+NaN if <3 pairs or zero variance.
+Description attribute: Corr(ret_t, |ret_{t+1}|) leverage-effect proxy.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: corr_ret_n
+Defined in: corr_ret_n.py (CorrRetNFeature)
+Docstring:
+Pearson correlation between signed log returns and trade count n in RTH.
+Description attribute: Correlation of log returns and trade count n (RTH).
+Required inputs:
+  - required_full_columns: symbol, time, close, n
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: corr_ret_volume
+Defined in: corr_ret_volume.py (CorrRetVolumeFeature)
+Docstring:
+09:30–15:59 内，logret 与 volume 的 Pearson 相关。
+成对样本 <3 或任一方差为 0 时 NaN。
+Description attribute: Correlation of signed log returns and volume within RTH.
+Required inputs:
+  - required_full_columns: symbol, time, close, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: corr_signret_volume
+Defined in: corr_signret_volume.py (CorrSignRetVolume)
+Docstring: (not provided)
+Description attribute: Pearson correlation between sign(log-return) and volume within RTH (lag 0).
+Required inputs:
+  - required_full_columns: symbol, time, close, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: count_extreme_k_sigma
+Defined in: count_extreme_k_sigma.py (CountExtremeKSigmaFeature)
+Docstring:
+Count of extreme simple returns where |ret| > k * sigma_robust.
+Description attribute: Count of bars with |ret| exceeding k·σ_robust (σ from IQR) within RTH.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: cv_close
+Defined in: cv_close.py (CVCloseFeature)
+Docstring:
+09:30–15:59 内，CV(close) = std(close)/mean(close)；mean<=0 或样本<2 则 NaN。
+Description attribute: Coefficient of variation of close: std/mean within 09:30–15:59.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: cv_n
+Defined in: cv_n.py (CVNFeature)
+Docstring:
+Coefficient of variation of per-bar trade count n in RTH: std(n)/mean(n).
+NaN if <3 bars or mean<=0.
+Description attribute: Std/mean of trade count n across RTH bars.
+Required inputs:
+  - required_full_columns: symbol, time, n
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: cv_trade_size
+Defined in: cv_trade_size.py (CVTradeSizeFeature)
+Docstring:
+Coefficient of variation for per-bar trade size (volume/n):
+    value = std(tsize)/mean(tsize), unbiased std; NaN if <3 bars or mean<=0.
+Description attribute: Coefficient of variation of per-bar trade size (volume/n) within 09:30–15:59.
+Required inputs:
+  - required_full_columns: symbol, time, volume, n
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: cv_volume
+Defined in: cv_volume.py (CVVolumeFeature)
+Docstring:
+Coefficient of variation of per-bar volume in RTH: std(volume)/mean(volume).
+NaN if <3 bars or mean<=0.
+Description attribute: Std/mean of volume across RTH bars.
+Required inputs:
+  - required_full_columns: symbol, time, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------

@@ -1,0 +1,29 @@
+Cube2mat features features starting with 'L':
+================================================================================
+Feature name: log_absret_on_logvolume_beta
+Defined in: log_absret_on_logvolume_beta.py (LogAbsRetOnLogVolumeBetaFeature)
+Docstring:
+Price-impact power law: OLS slope of log(|logret|) on log(volume) in RTH.
+Drop bars where |logret|<=0 or volume<=0. NaN if insufficient or var(logV)=0.
+Description attribute: Impact exponent: slope of log|logret| ~ log(volume).
+Required inputs:
+  - required_full_columns: symbol, time, close, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: lower_shadow_ratio_mean
+Defined in: lower_shadow_ratio_mean.py (LowerShadowRatioMeanFeature)
+Docstring:
+Mean lower shadow ratio: (min(open,close) - low) / (high - low), exclude zero-range bars.
+Description attribute: Mean lower shadow / range ratio in RTH; exclude zero-range bars.
+Required inputs:
+  - required_full_columns: symbol, time, open, high, low, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: lz_complexity_signret
+Defined in: lz_complexity_signret.py (LZComplexitySignRet)
+Docstring: (not provided)
+Description attribute: Lempel–Ziv complexity of the sign of log returns (zeros dropped), normalized by n/log2(n).
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------

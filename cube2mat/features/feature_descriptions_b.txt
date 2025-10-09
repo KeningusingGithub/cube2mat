@@ -1,0 +1,48 @@
+Cube2mat features features starting with 'B':
+================================================================================
+Feature name: bars_to_50pct_volume_time_frac
+Defined in: bars_to_50pct_volume_time_frac.py (BarsTo50PctVolumeTimeFracFeature)
+Docstring: (not provided)
+Description attribute: In time order, fraction of RTH bars elapsed when cumulative volume first reaches 50% of the day's total.
+Required inputs:
+  - required_full_columns: symbol, time, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: bpv_logret
+Defined in: bpv_logret.py (BPVLogRetFeature)
+Docstring:
+09:30–15:59 内，BPV = (π/2) * sum_{t>=2} |r_t||r_{t-1}|，r_t=diff(log(close))，close>0。
+Description attribute: Bipower variation: (pi/2) * sum |r_t||r_{t-1}| using log returns.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: bpv_to_rv_ratio
+Defined in: bpv_to_rv_ratio.py (BPVtoRVRatioFeature)
+Docstring:
+Ratio of Bipower Variation to Realized Variance using log returns in RTH:
+  RV = sum r^2; BPV = (pi/2)*sum |r_t||r_{t-1}|.
+NaN if <3 returns or RV<=0.
+Description attribute: Bipower Variation relative to Realized Variance (log returns).
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: breakout_nextret_high
+Defined in: breakout_nextret_high.py (BreakoutNextRetHighFeature)
+Docstring:
+Mean next simple return conditional on a 'new high' breakout event.
+Description attribute: Mean(next simple ret | new session high at t) within RTH.
+Required inputs:
+  - required_full_columns: symbol, time, high, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: breakout_nextret_low
+Defined in: breakout_nextret_low.py (BreakoutNextRetLowFeature)
+Docstring:
+Mean next simple return conditional on a 'new low' breakout event.
+Description attribute: Mean(next simple ret | new session low at t) within RTH.
+Required inputs:
+  - required_full_columns: symbol, time, low, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------

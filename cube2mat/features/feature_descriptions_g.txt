@@ -1,0 +1,35 @@
+Cube2mat features features starting with 'G':
+================================================================================
+Feature name: garman_klass_session_vol
+Defined in: garman_klass_session_vol.py (GarmanKlassSessionVolFeature)
+Docstring:
+会话级 Garman–Klass 波动率（基于本日会话的 O/H/L/C 聚合）：
+  O = 会话首笔 open、C = 会话末笔 close、H = 会话内 max(high)、L = 会话内 min(low)
+  var_GK = 0.5*[ln(H/L)]^2 - (2ln2 - 1)*[ln(C/O)]^2
+  vol    = sqrt(max(var_GK, 0))
+要求 O,H,L,C > 0，否则 NaN。
+Description attribute: Session-level Garman–Klass volatility using aggregated O/H/L/C.
+Required inputs:
+  - required_full_columns: symbol, time, open, high, low, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: gini_absret
+Defined in: gini_absret.py (GiniAbsRetFeature)
+Docstring:
+Gini of |log returns| across RTH bars. Complement to RV Gini (which uses r^2).
+Description attribute: Gini concentration of |logret| magnitudes within RTH.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: gk_var_sum_ohlc
+Defined in: gk_var_sum_ohlc.py (GKVarSumOHLCFeature)
+Docstring:
+逐 bar 的 Garman–Klass 方差并在会话内求和（近似集成方差）：
+  var_i = 0.5*[ln(H_i/L_i)]^2 - (2ln2 - 1)*[ln(C_i/O_i)]^2，按 bar 计算后 clip 至 >=0 再求和。
+要求各 bar 的 O/H/L/C > 0；若无有效 bar 或总和<=0 则 NaN。
+Description attribute: Sum of per-bar GK variance across the session (clipped at 0).
+Required inputs:
+  - required_full_columns: symbol, time, open, high, low, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------

@@ -1,0 +1,75 @@
+Cube2mat features features starting with 'U':
+================================================================================
+Feature name: u_shape_corr_absret
+Defined in: u_shape_corr_absret.py (UShapeCorrAbsRetFeature)
+Docstring:
+Pearson correlation between |log return| and a U-shape template over RTH bars.
+Description attribute: Correlation of |log return| with U-shape time template.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: u_shape_corr_volume
+Defined in: u_shape_corr_volume.py (UShapeCorrVolumeFeature)
+Docstring:
+Pearson correlation between volume and a U-shape template over RTH bars.
+Description attribute: Correlation of volume with U-shape time template (early/late high).
+Required inputs:
+  - required_full_columns: symbol, time, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: ulcer_index_close
+Defined in: ulcer_index_close.py (UlcerIndexCloseFeature)
+Docstring:
+Ulcer Index (RMS of drawdowns) for close within 09:30–15:59.
+Description attribute: Ulcer Index based on close drawdowns in RTH (fraction, not %).
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: up_bar_share
+Defined in: up_bar_share.py (UpBarShareFeature)
+Docstring:
+09:30–15:59 内，ret=close.pct_change()，上涨 bar 占比：
+  share = count(ret>0) / count(valid ret)
+Description attribute: Share of bars with positive simple return within the session.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: up_down_absret_ratio
+Defined in: up_down_absret_ratio.py (UpDownAbsRetRatioFeature)
+Docstring:
+上/下状态 |ret| 均值之比： mean(|ret||ret>0)/mean(|ret||ret<0)。
+分母<=0 或无有效样本时 NaN。
+Description attribute: Ratio of mean |ret| in up vs down states.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: up_mean_absret
+Defined in: up_mean_absret.py (UpMeanAbsRetFeature)
+Docstring:
+上涨状态（ret>0）下 |ret| 的均值。有效上涨样本<1 则 NaN。
+Description attribute: Mean absolute simple return conditional on ret>0.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: up_prob_highvol_minus_lowvol
+Defined in: up_prob_highvol_minus_lowvol.py (UpProbHighVolMinusLowVol)
+Docstring: (not provided)
+Description attribute: ΔP(up): P(r>0 | volume≥Q90) − P(r>0 | volume≤Q10) using RTH log returns aligned to volume at time t.
+Required inputs:
+  - required_full_columns: symbol, time, close, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: upper_shadow_ratio_mean
+Defined in: upper_shadow_ratio_mean.py (UpperShadowRatioMeanFeature)
+Docstring:
+Mean upper shadow ratio: (high - max(open,close)) / (high - low), exclude zero-range bars.
+Description attribute: Mean upper shadow / range ratio in RTH; exclude zero-range bars.
+Required inputs:
+  - required_full_columns: symbol, time, open, high, low, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------

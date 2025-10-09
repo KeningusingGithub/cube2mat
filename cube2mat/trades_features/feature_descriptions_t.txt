@@ -1,0 +1,11 @@
+Cube2mat trades features features starting with 'T':
+================================================================================
+Feature name: trade_rth_dollar_volume
+Defined in: trade_rth_dollar_volume.py (TradeRthDollarVolume)
+Docstring:
+计算 RTH 内的 price*size 成交额。
+Description attribute: Sum(price*size) per symbol within RTH
+Required inputs:
+  - required_pv_columns: symbol
+  - required_trade_columns: symbol, participant_timestamp, price, size
+--------------------------------------------------------------------------------

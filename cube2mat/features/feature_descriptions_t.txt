@@ -1,0 +1,280 @@
+Cube2mat features features starting with 'T':
+================================================================================
+Feature name: tail_imbalance_q95_logret
+Defined in: tail_imbalance_q95_logret.py (TailImbalanceQ95LogRet)
+Docstring: (not provided)
+Description attribute: Tail imbalance at 95%% of |r|: (count[r≤−t] − count[r≥+t]) / (count[r≤−t] + count[r≥+t]).
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: theil_sen_slope_close_time
+Defined in: theil_sen_slope_close_time.py (TheilSenSlopeCloseTimeFeature)
+Docstring:
+Theil–Sen robust slope of close on minutes since 09:30 within RTH.
+Median of pairwise slopes (y_j - y_i)/(t_j - t_i), i<j. NaN if <2 points.
+Description attribute: Robust trend slope (Theil–Sen) of close vs time (minutes).
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: time_share_above_open
+Defined in: time_share_above_open.py (TimeShareAboveOpenFeature)
+Docstring:
+定义锚 = 当日首个有效 open（若缺则首个 close）。
+时间占比 = count(close >= anchor)/count(valid close)。
+Description attribute: Fraction of bars with close >= session anchor (first open else first close).
+Required inputs:
+  - required_full_columns: symbol, time, open, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: time_share_above_twap
+Defined in: time_share_above_twap.py (TimeShareAboveTWAPFeature)
+Docstring:
+Fraction of bars with close > TWAP (mean close) in 09:30–15:59.
+Description attribute: Share of bars where close > TWAP during RTH.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: time_share_above_vwap
+Defined in: time_share_above_vwap.py (TimeShareAboveVWAPFeature)
+Docstring:
+收盘价高于 vwap 的时间占比： count(close>vwap)/count(valid pair)。
+Description attribute: Fraction of bars with close > vwap during the session.
+Required inputs:
+  - required_full_columns: symbol, time, close, vwap
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: time_share_mid_range_20pct
+Defined in: time_share_mid_range_20pct.py (TimeShareMidRange20pctFeature)
+Docstring:
+Time share where normalized position p_t=(close-L)/(H-L) is within [0.4,0.6].
+NaN if (H-L)<=0 or no bars.
+Description attribute: Fraction of bars with close inside the middle 20% of session range.
+Required inputs:
+  - required_full_columns: symbol, time, high, low, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: time_to_20pct_volume_frac
+Defined in: time_to_20pct_volume_frac.py (TimeTo20PctVolumeFracFeature)
+Docstring:
+09:30–15:59 内，累积成交量达到 20% 所需的“时间占比”（分钟/总分钟，∈[0,1]）。
+若 sum(volume)<=0 则 NaN。
+Description attribute: Fraction of session minutes to reach 20% cumulative volume.
+Required inputs:
+  - required_full_columns: symbol, time, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: time_to_20pct_volume_min
+Defined in: time_to_20pct_volume_min.py (TimeTo20PctVolumeMinFeature)
+Docstring:
+09:30–15:59 内，累积成交量达到 20% 所需时间占全日交易时长的比例（自 09:30 起）。
+若 sum(vol)<=0 则 NaN。
+Description attribute: Fraction of trading session required to reach 20% of cumulative volume.
+Required inputs:
+  - required_full_columns: symbol, time, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: time_to_50pct_volume_frac
+Defined in: time_to_50pct_volume_frac.py (TimeTo50PctVolumeFracFeature)
+Docstring:
+Fraction of RTH minutes to reach 50% cumulative volume; range [0, 1].
+Returns NaN if total volume <= 0.
+Description attribute: Session fraction to reach 50% of cumulative volume.
+Required inputs:
+  - required_full_columns: symbol, time, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: time_to_50pct_volume_min
+Defined in: time_to_50pct_volume_min.py (TimeTo50PctVolumeMinFeature)
+Docstring:
+Minutes since 09:30 to reach 50% of cumulative volume within RTH.
+Returns NaN if total volume <= 0.
+Description attribute: Absolute minutes required to reach 50% of session volume.
+Required inputs:
+  - required_full_columns: symbol, time, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: time_to_first_extreme_q90_absret_frac
+Defined in: time_to_first_extreme_q90_absret_frac.py (TimeToFirstExtremeQ90AbsRetFracFeature)
+Docstring: (not provided)
+Description attribute: Fraction of RTH returns elapsed when |r| first crosses the 90th percentile of |r| (intraday log-returns).
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: time_to_half_openclose_ret_frac
+Defined in: time_to_half_openclose_ret_frac.py (TimeToHalfOpenCloseRetFrac)
+Docstring: (not provided)
+Description attribute: Fraction of RTH return observations elapsed when cumulative log return first reaches 50% of |total O→C log return| (direction-aware).
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: total_variation_close
+Defined in: total_variation_close.py (TotalVariationClose)
+Docstring: (not provided)
+Description attribute: Sum of absolute price changes Σ|Δclose| within RTH (path length in price units).
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: transition_asymmetry
+Defined in: transition_asymmetry.py (TransitionAsymmetryFeature)
+Docstring:
+Asymmetry of sign transitions using simple returns in RTH:
+  value = P(up->up) - P(down->down)
+where P(up->up) computed among pairs with previous sign=+1 (exclude zeros), etc.
+Description attribute: P(up→up) - P(down→down) from simple-return signs (exclude zeros).
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: transition_entropy_signret
+Defined in: transition_entropy_signret.py (TransitionEntropySignRet)
+Docstring: (not provided)
+Description attribute: Conditional entropy H(S_t | S_{t-1}) of sign(log returns) over RTH, normalized by log2(2)=1.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: transition_p_same_sign
+Defined in: transition_p_same_sign.py (TransitionPSameSignFeature)
+Docstring:
+P(sign_t == sign_{t-1}) using simple returns in RTH, excluding zeros.
+Description attribute: Probability that consecutive simple returns have the same sign (exclude zeros).
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: trend_piecewise_slope_am_pm
+Defined in: trend_piecewise_slope_am_pm.py (TrendPiecewiseSlopeAmPmFeature)
+Docstring:
+Difference between afternoon and morning linear slopes.
+Description attribute: Afternoon minus morning OLS slope of close~time within RTH.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: trend_quad_beta1
+Defined in: trend_quad_beta1.py (TrendQuadBeta1Feature)
+Docstring:
+OLS coefficient of t (linear term) in close ~ 1 + t + t^2, with t in [0,1].
+Description attribute: Linear coefficient (beta1) of quadratic trend close~1+t+t^2 in RTH.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: trend_quad_beta2
+Defined in: trend_quad_beta2.py (TrendQuadBeta2Feature)
+Docstring:
+OLS coefficient of t^2 (quadratic term) in close ~ 1 + t + t^2.
+Description attribute: Quadratic coefficient (beta2) of close~1+t+t^2 in RTH.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: trend_r2_close_time
+Defined in: trend_r2_close_time.py (TrendR2CloseTimeFeature)
+Docstring:
+09:30–15:59 内，OLS: close ~ time(分钟) 的拟合优度 R^2。
+若 var(close)=0 或样本<2，则 NaN。
+Description attribute: R^2 of OLS close~time (minutes since 09:30) within 09:30–15:59; NaN if <2 points or var(close)=0.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: trend_resid_kurt
+Defined in: trend_resid_kurt.py (TrendResidKurtFeature)
+Docstring:
+Adjusted excess kurtosis of residuals from close ~ time in RTH.
+Description attribute: Adjusted excess kurtosis of residuals from linear trend close~time in RTH.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: trend_resid_skew
+Defined in: trend_resid_skew.py (TrendResidSkewFeature)
+Docstring:
+Adjusted skewness of residuals from close ~ time (t in [0,1]) in RTH.
+Description attribute: Adjusted skewness of residuals from linear trend close~time in RTH.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: trend_resid_std
+Defined in: trend_resid_std.py (TrendResidStdFeature)
+Docstring:
+09:30–15:59 内，对 close ~ time(分钟) 做回归，返回残差标准差的无偏估计：
+    sigma = sqrt(SSE / (n - 2))。n<3 或 var(time)=0 则 NaN。
+反映去趋势后的日内“噪声强度”。
+Description attribute: Unbiased residual std from OLS close~time within 09:30–15:59; sqrt(SSE/(n-2)).
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: trend_slope_close_time
+Defined in: trend_slope_close_time.py (TrendSlopeCloseTimeFeature)
+Docstring:
+09:30–15:59 内，对每个 symbol 做 OLS: close ~ time(分钟)。
+输出斜率（单位：价格/分钟）。n<2 或 var(time)=0 时 NaN。
+Description attribute: OLS slope of close on minutes-since-09:30 within 09:30–15:59; NaN if <2 points or var(time)=0.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: trend_slope_tstat
+Defined in: trend_slope_tstat.py (TrendSlopeTstatFeature)
+Docstring:
+09:30–15:59 内，OLS: close ~ time(分钟) 的斜率 t 统计量：
+  t = beta1 / SE(beta1), 其中 SE(beta1) = sqrt( sigma^2 / Sxx ),
+  sigma^2 = SSE/(n-2), Sxx = sum((t - mean(t))^2)。
+若 n<3 或 Sxx<=0 则 NaN。
+Description attribute: t-stat of OLS slope for close~time (minutes since 09:30) within 09:30–15:59.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: trend_slope_volume_weighted
+Defined in: trend_slope_volume_weighted.py (TrendSlopeVolumeWeightedFeature)
+Docstring:
+09:30–15:59 内，对每个 symbol 做体量加权回归（WLS）：
+    close ~ time(分钟)，权重 = volume。
+输出加权斜率；若有效样本<2、权重和<=0 或加权 var(time)=0，则 NaN。
+Description attribute: Volume-weighted OLS slope of close~time (minutes since 09:30) within 09:30–15:59.
+Required inputs:
+  - required_full_columns: symbol, time, close, volume
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: turning_point_count
+Defined in: turning_point_count.py (TurningPointCountFeature)
+Docstring:
+Count of turning points using sign changes of close differences, with small-move filtering:
+  - d = diff(close)
+  - threshold = theta * median(|d|), theta=0.1 (if median==0 -> 0)
+  - keep |d| > threshold, remove zeros, count sign flips
+Description attribute: Number of local extrema based on filtered sign flips of Δclose (theta=0.1).
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: turning_point_rate_close
+Defined in: turning_point_rate_close.py (TurningPointRateClose)
+Docstring: (not provided)
+Description attribute: Fraction of interior RTH bars that are local turning points of close (sign of Δclose flips; endpoints excluded).
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
+Feature name: twap
+Defined in: twap.py (TwapFeature)
+Docstring:
+09:30–15:59(交易所本地时区，默认 America/New_York) 内，
+按 symbol 计算 close 的均值；若该 symbol 当日无有效点，则 NaN。
+输出: ['symbol', 'value']。
+Description attribute: Intraday mean(close) between 09:30–15:59.
+Required inputs:
+  - required_full_columns: symbol, time, close
+  - required_pv_columns: symbol
+--------------------------------------------------------------------------------
